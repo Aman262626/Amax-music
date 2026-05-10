@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback } from "react";
 import SafeImage from "@/components/SafeImage";
 import SongRow from "@/components/SongRow";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -8,8 +8,8 @@ import type { Album } from "@/lib/types";
 import { IoPlay, IoShuffle, IoCloudDownload } from "react-icons/io5";
 import { getBestDownloadUrl } from "@/lib/utils";
 
-export default function AlbumPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function AlbumPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { playQueue } = usePlayer();
   const [album, setAlbum] = useState<Album | null>(null);
   const [loading, setLoading] = useState(true);

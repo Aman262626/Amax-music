@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback } from "react";
 import SafeImage from "@/components/SafeImage";
 import SongRow from "@/components/SongRow";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -11,9 +11,9 @@ import { formatCount, getBestDownloadUrl } from "@/lib/utils";
 export default function PlaylistPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
+  const { id } = params;
   const { playQueue } = usePlayer();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState(true);

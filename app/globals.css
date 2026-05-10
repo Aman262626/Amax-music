@@ -349,3 +349,12 @@ input[type="range"]::-webkit-slider-thumb {
 .video-shadow {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(29, 185, 84, 0.1);
 }
+
+/* Slow pulse for samples */
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IoHome, IoSearch, IoLibrary, IoPersonCircle } from "react-icons/io5";
+import { IoHome, IoSearch, IoLibrary, IoPersonCircle, IoPlay } from "react-icons/io5";
 
 const NAV_ITEMS = [
   { href: "/", icon: IoHome, label: "Home" },
+  { href: "/samples", icon: IoPlay, label: "Samples" },
   { href: "/search", icon: IoSearch, label: "Search" },
   { href: "/library", icon: IoLibrary, label: "Library" },
   { href: "/profile", icon: IoPersonCircle, label: "Profile" },
