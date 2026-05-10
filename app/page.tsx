@@ -7,7 +7,7 @@ import PlaylistCard from "@/components/PlaylistCard";
 import SongRow from "@/components/SongRow";
 import SongPreviewScroll from "@/components/SongPreviewScroll";
 import VideoPreviewScroll from "@/components/VideoPreviewScroll";
-import { getHistory } from "@/lib/storage";
+import { getHistory, getFavorites } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
 
 const CATEGORIES = [
@@ -44,6 +44,9 @@ export default function HomePage() {
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [previewSongs, setPreviewSongs] = useState<Song[]>([]);
   const [romanticSongs, setRomanticSongs] = useState<Song[]>([]);
+  const [recommendedSongs, setRecommendedSongs] = useState<Song[]>([]);
+  const [artistMix, setArtistMix] = useState<{ artist: string; songs: Song[] }>({ artist: "", songs: [] });
+  const [discoverSongs, setDiscoverSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTrending = useCallback(async () => {
@@ -85,9 +88,68 @@ export default function HomePage() {
     }
   }, []);
 
+  const fetchRecommendations = useCallback(async () => {
+    const history = getHistory();
+    const favorites = getFavorites();
+    const seeds = [...history.slice(0, 5), ...favorites.slice(0, 3)];
+    if (seeds.length === 0) return;
+
+    const seen = new Set(history.map((s) => s.id));
+    const recs: Song[] = [];
+
+    const seedIds = Array.from(new Set(seeds.map((s) => s.id))).slice(0, 3);
+    const fetches = seedIds.map((id) =>
+      fetch(`/api/songs/${id}/suggestions`)
+        .then((r) => r.json())
+        .then((d) => d.songs as Song[] || [])
+        .catch(() => [] as Song[])
+    );
+    const results = await Promise.all(fetches);
+    for (const songs of results) {
+      for (const s of songs) {
+        if (!seen.has(s.id)) {
+          seen.add(s.id);
+          recs.push(s);
+        }
+      }
+    }
+    setRecommendedSongs(recs.slice(0, 12));
+
+    const artistCounts: Record<string, number> = {};
+    for (const s of history.slice(0, 20)) {
+      const name = s.artist.split(",")[0].trim();
+      if (name) artistCounts[name] = (artistCounts[name] || 0) + 1;
+    }
+    const topArtist = Object.entries(artistCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (topArtist) {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(topArtist + " songs")}&type=songs`);
+        const data = await res.json();
+        const artistSongs = (data.songs as Song[] || []).filter((s: Song) => !seen.has(s.id));
+        setArtistMix({ artist: topArtist, songs: artistSongs.slice(0, 10) });
+      } catch { /* ignore */ }
+    }
+  }, []);
+
+  const fetchDiscover = useCallback(async () => {
+    const queries = [
+      "latest hindi songs 2025", "new bollywood releases", "indie pop hindi",
+      "punjabi new songs", "top english songs", "retro bollywood hits",
+      "sufi songs", "desi hip hop", "ghazal hits", "classical fusion",
+    ];
+    const pick = queries[Math.floor(Math.random() * queries.length)];
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(pick)}&type=songs`);
+      const data = await res.json();
+      setDiscoverSongs(data.songs || []);
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => {
     fetchTrending();
     fetchPreviewSongs();
+    fetchRecommendations();
+    fetchDiscover();
     fetchCategory(CATEGORIES[0].label, CATEGORIES[0].query);
     setRecentlyPlayed(getHistory().slice(0, 8));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +192,24 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Recommended For You */}
+      {recommendedSongs.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">🎯 Recommended For You</h2>
+          <p className="text-spotify-light-gray text-xs mb-4">Based on what you listen to</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            {recommendedSongs.map((song) => (
+              <SongCard key={`rec-${song.id}`} song={song} songs={recommendedSongs} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* More from top artist */}
+      {artistMix.songs.length > 0 && (
+        <SongPreviewScroll songs={artistMix.songs} title={`More from ${artistMix.artist}`} />
       )}
 
       {/* Preview Scroll - YouTube Music style */}
@@ -221,6 +301,29 @@ export default function HomePage() {
       {/* Video Preview Scroll */}
       {songs.length > 0 && (
         <VideoPreviewScroll songs={songs.slice(0, 10)} title="Music Videos" />
+      )}
+
+      {/* Discover New */}
+      {discoverSongs.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">🔀 Discover Something New</h2>
+              <p className="text-spotify-light-gray text-xs">Fresh picks every time you visit</p>
+            </div>
+            <button
+              onClick={fetchDiscover}
+              className="px-3 py-1.5 glass rounded-full text-xs text-white/70 hover:text-white transition-colors"
+            >
+              Refresh ↻
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            {discoverSongs.slice(0, 12).map((song) => (
+              <SongCard key={`disc-${song.id}`} song={song} songs={discoverSongs} />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* More Sample Scrolls at bottom */}

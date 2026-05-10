@@ -375,7 +375,7 @@ export default function Player() {
       {!showMobilePlayer && (
         <div
           className="lg:hidden fixed left-2 right-2 z-30 glass-strong rounded-xl overflow-hidden cursor-pointer"
-          style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
           onClick={() => setShowMobilePlayer(true)}
         >
           <div
@@ -469,7 +469,7 @@ export default function Player() {
               </button>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6">
+            <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 overflow-y-auto pb-8">
               {/* Album art with vinyl effect */}
               <div className="relative">
                 <div className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl ${isPlaying ? 'glow-green' : ''}`}>
@@ -574,7 +574,7 @@ export default function Player() {
                 </div>
 
                 {/* Extra controls row */}
-                <div className="flex items-center justify-center gap-5 mt-6 flex-wrap">
+                <div className="flex items-center justify-start gap-5 mt-6 overflow-x-auto pb-2 scrollbar-hide px-2">
                   <button
                     onClick={handleDownload}
                     className="text-spotify-light-gray hover:text-white flex flex-col items-center gap-1 transition-colors"
