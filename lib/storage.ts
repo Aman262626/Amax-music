@@ -1,8 +1,8 @@
 import type { Song } from "./types";
 
-const FAVORITES_KEY = "spotify_favorites";
-const HISTORY_KEY = "spotify_history";
-const QUALITY_KEY = "spotify_quality";
+const FAVORITES_KEY = "amax_favorites";
+const HISTORY_KEY = "amax_history";
+const QUALITY_KEY = "amax_quality";
 const MAX_HISTORY = 100;
 
 function getItem<T>(key: string, fallback: T): T {

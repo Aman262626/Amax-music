@@ -9,10 +9,10 @@ import MobileNav from "@/components/MobileNav";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Spotify - Music Player",
+  title: "AMAX - Music Player",
   description:
-    "Free music streaming. Search, play, and download songs with a premium Spotify-like experience.",
-  keywords: ["spotify", "music", "player", "streaming", "download", "songs"],
+    "AMAX Music - Free music streaming. Search, play, and download songs with a premium experience.",
+  keywords: ["amax", "music", "player", "streaming", "download", "songs"],
 };
 
 export const viewport: Viewport = {

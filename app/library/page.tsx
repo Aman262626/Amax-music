@@ -251,7 +251,7 @@ export default function LibraryPage() {
           <div className="bg-spotify-gray rounded-lg p-4">
             <h3 className="text-white font-semibold mb-2">About</h3>
             <p className="text-spotify-light-gray text-sm mb-1">
-              Spotify Music Player v1.0.0
+              AMAX Music Player v1.0.0
             </p>
             <p className="text-spotify-light-gray text-xs">
               All copyrights reserved to cantarellabots and its affiliated parties.

@@ -182,7 +182,7 @@ export default function HomePage() {
         </p>
         <p>
           Powered by{" "}
-          <span className="text-spotify-green font-semibold">Spotify Music</span>
+          <span className="text-spotify-green font-semibold">AMAX Music</span>
         </p>
       </footer>
     </div>

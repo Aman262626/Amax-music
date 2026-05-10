@@ -21,7 +21,7 @@ export default function Sidebar() {
         <Link href="/" className="flex items-center gap-2 mb-4 px-2">
           <BiMusic className="text-spotify-green text-3xl" />
           <span className="text-white font-bold text-xl tracking-tight">
-            Spotify
+            AMAX
           </span>
         </Link>
 
