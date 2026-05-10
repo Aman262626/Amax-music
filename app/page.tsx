@@ -5,6 +5,7 @@ import SongCard from "@/components/SongCard";
 import AlbumCard from "@/components/AlbumCard";
 import PlaylistCard from "@/components/PlaylistCard";
 import SongRow from "@/components/SongRow";
+import SongPreviewScroll from "@/components/SongPreviewScroll";
 import { getHistory } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
 
@@ -40,6 +41,7 @@ export default function HomePage() {
   const [categorySongs, setCategorySongs] = useState<Record<string, Song[]>>({});
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+  const [previewSongs, setPreviewSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTrending = useCallback(async () => {
@@ -56,6 +58,16 @@ export default function HomePage() {
     }
   }, []);
 
+  const fetchPreviewSongs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/search?q=new releases&type=songs");
+      const data = await res.json();
+      setPreviewSongs(data.songs || []);
+    } catch {
+      // silently fail
+    }
+  }, []);
+
   const fetchCategory = useCallback(async (label: string, query: string) => {
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=songs`);
@@ -68,6 +80,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchTrending();
+    fetchPreviewSongs();
     fetchCategory(CATEGORIES[0].label, CATEGORIES[0].query);
     setRecentlyPlayed(getHistory().slice(0, 8));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,6 +124,9 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Preview Scroll - YouTube Music style */}
+      <SongPreviewScroll songs={previewSongs} title="Quick Preview — New Releases" />
 
       {/* Category Chips */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">

@@ -29,6 +29,8 @@ import { MdRepeatOne, MdQueueMusic, MdLyrics } from "react-icons/md";
 import QueueDrawer from "./QueueDrawer";
 import LyricsPanel from "./LyricsPanel";
 import AudioVisualizer from "./AudioVisualizer";
+import VideoPlayer from "./VideoPlayer";
+import PartyMode from "./PartyMode";
 
 export default function Player() {
   const {
@@ -328,6 +330,8 @@ export default function Player() {
               </div>
             )}
           </div>
+          <VideoPlayer />
+          <PartyMode />
           <button
             onClick={() => setShowQueue(!showQueue)}
             className={`transition-all hover:scale-110 ${
@@ -569,7 +573,7 @@ export default function Player() {
                 </div>
 
                 {/* Extra controls row */}
-                <div className="flex items-center justify-center gap-6 mt-6">
+                <div className="flex items-center justify-center gap-5 mt-6 flex-wrap">
                   <button
                     onClick={handleDownload}
                     className="text-spotify-light-gray hover:text-white flex flex-col items-center gap-1 transition-colors"
@@ -608,6 +612,14 @@ export default function Player() {
                     <IoTimer className="text-xl" />
                     <span className="text-[10px]">{sleepTimer > 0 ? `${sleepTimer}m` : 'Timer'}</span>
                   </button>
+                  <div className="flex flex-col items-center gap-1">
+                    <VideoPlayer />
+                    <span className="text-spotify-light-gray text-[10px]">Video</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <PartyMode />
+                    <span className="text-spotify-light-gray text-[10px]">Party</span>
+                  </div>
                 </div>
 
                 {/* Timer menu overlay */}
