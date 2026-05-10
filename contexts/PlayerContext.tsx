@@ -390,29 +390,30 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [resume, pause, previous, next, seek]);
 
   // BroadcastChannel sync for multi-tab playback coordination
+  const syncChannelRef = useRef<BroadcastChannel | null>(null);
+
   useEffect(() => {
     if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
     const channel = new BroadcastChannel("amax_player_sync");
+    syncChannelRef.current = channel;
 
     channel.onmessage = (event) => {
       const { type } = event.data;
       if (type === "PLAY_STARTED") {
-        // Another tab started playing, pause this one
         audioRef.current?.pause();
       }
     };
 
-    return () => channel.close();
+    return () => {
+      channel.close();
+      syncChannelRef.current = null;
+    };
   }, []);
 
   // Notify other tabs when this tab starts playing
   useEffect(() => {
-    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
-    if (isPlaying && currentSong) {
-      const channel = new BroadcastChannel("amax_player_sync");
-      channel.postMessage({ type: "PLAY_STARTED", songId: currentSong.id });
-      channel.close();
-    }
+    if (!isPlaying || !currentSong) return;
+    syncChannelRef.current?.postMessage({ type: "PLAY_STARTED", songId: currentSong.id });
   }, [isPlaying, currentSong]);
 
   return (
