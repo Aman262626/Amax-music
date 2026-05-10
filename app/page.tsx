@@ -6,6 +6,7 @@ import AlbumCard from "@/components/AlbumCard";
 import PlaylistCard from "@/components/PlaylistCard";
 import SongRow from "@/components/SongRow";
 import SongPreviewScroll from "@/components/SongPreviewScroll";
+import VideoPreviewScroll from "@/components/VideoPreviewScroll";
 import { getHistory } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
 
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [previewSongs, setPreviewSongs] = useState<Song[]>([]);
+  const [romanticSongs, setRomanticSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTrending = useCallback(async () => {
@@ -60,9 +62,14 @@ export default function HomePage() {
 
   const fetchPreviewSongs = useCallback(async () => {
     try {
-      const res = await fetch("/api/search?q=new releases&type=songs");
-      const data = await res.json();
-      setPreviewSongs(data.songs || []);
+      const [newRes, romanticRes] = await Promise.all([
+        fetch("/api/search?q=new releases&type=songs"),
+        fetch("/api/search?q=romantic love songs hindi&type=songs"),
+      ]);
+      const newData = await newRes.json();
+      const romanticData = await romanticRes.json();
+      setPreviewSongs(newData.songs || []);
+      setRomanticSongs(romanticData.songs || []);
     } catch {
       // silently fail
     }
@@ -209,6 +216,16 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Video Preview Scroll */}
+      {songs.length > 0 && (
+        <VideoPreviewScroll songs={songs.slice(0, 10)} title="Music Videos" />
+      )}
+
+      {/* More Sample Scrolls at bottom */}
+      {romanticSongs.length > 0 && (
+        <SongPreviewScroll songs={romanticSongs} title="Romantic Hits — Quick Listen" />
       )}
 
       {/* Footer */}

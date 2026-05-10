@@ -7,6 +7,7 @@ import SongRow from "@/components/SongRow";
 import AlbumCard from "@/components/AlbumCard";
 import ArtistCard from "@/components/ArtistCard";
 import PlaylistCard from "@/components/PlaylistCard";
+import VideoPreviewScroll from "@/components/VideoPreviewScroll";
 import type { Song, Album, Artist, Playlist } from "@/lib/types";
 import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch } from "react-icons/io5";
 
@@ -235,6 +236,11 @@ function SearchContent() {
                     ))}
                   </div>
                 </section>
+              )}
+
+              {/* Video Previews for search results */}
+              {tab === "all" && songs.length > 0 && (
+                <VideoPreviewScroll songs={songs.slice(0, 8)} title="Video Results" />
               )}
             </>
           )}

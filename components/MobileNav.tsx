@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IoHome, IoSearch, IoLibrary } from "react-icons/io5";
+import { IoHome, IoSearch, IoLibrary, IoPersonCircle } from "react-icons/io5";
 
 const NAV_ITEMS = [
   { href: "/", icon: IoHome, label: "Home" },
   { href: "/search", icon: IoSearch, label: "Search" },
   { href: "/library", icon: IoLibrary, label: "Library" },
+  { href: "/profile", icon: IoPersonCircle, label: "Profile" },
 ];
 
 export default function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-strong">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-strong" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="flex items-center justify-around py-2">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
