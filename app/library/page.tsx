@@ -30,7 +30,7 @@ const QUALITY_OPTIONS = [
 ];
 
 export default function LibraryPage() {
-  const { playQueue } = usePlayer();
+  const { playQueue, autoPlay, toggleAutoPlay } = usePlayer();
   const [tab, setTab] = useState<LibraryTab>("favorites");
   const [favorites, setFavorites] = useState<Song[]>([]);
   const [history, setHistory] = useState<Song[]>([]);
@@ -79,30 +79,30 @@ export default function LibraryPage() {
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setTab("favorites")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             tab === "favorites"
-              ? "bg-spotify-green text-black"
-              : "bg-spotify-gray text-white hover:bg-spotify-gray/80"
+              ? "bg-gradient-to-r from-accent-pink to-accent-red text-white shadow-lg"
+              : "glass text-white hover:bg-white/10"
           }`}
         >
           <IoHeart /> Liked Songs
         </button>
         <button
           onClick={() => setTab("history")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             tab === "history"
-              ? "bg-spotify-green text-black"
-              : "bg-spotify-gray text-white hover:bg-spotify-gray/80"
+              ? "bg-gradient-to-r from-accent-purple to-accent-blue text-white shadow-lg"
+              : "glass text-white hover:bg-white/10"
           }`}
         >
           <IoTime /> History
         </button>
         <button
           onClick={() => setTab("settings")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             tab === "settings"
-              ? "bg-spotify-green text-black"
-              : "bg-spotify-gray text-white hover:bg-spotify-gray/80"
+              ? "bg-gradient-to-r from-spotify-green to-accent-cyan text-white shadow-lg"
+              : "glass text-white hover:bg-white/10"
           }`}
         >
           <IoSettings /> Settings
@@ -113,11 +113,11 @@ export default function LibraryPage() {
       {tab === "favorites" && (
         <div>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-48 h-48 bg-gradient-to-br from-indigo-600 to-spotify-green rounded-lg flex items-center justify-center shadow-xl">
-              <IoHeart className="text-white text-7xl" />
+            <div className="w-40 h-40 sm:w-48 sm:h-48 bg-gradient-to-br from-accent-pink via-accent-purple to-spotify-green rounded-xl flex items-center justify-center shadow-2xl glow-pink">
+              <IoHeart className="text-white text-6xl sm:text-7xl drop-shadow-lg" />
             </div>
             <div>
-              <p className="text-spotify-light-gray text-xs uppercase tracking-wider">
+              <p className="text-spotify-light-gray text-xs uppercase tracking-widest">
                 Playlist
               </p>
               <h2 className="text-3xl sm:text-5xl font-bold text-white mb-2">
@@ -133,13 +133,13 @@ export default function LibraryPage() {
             <div className="flex items-center gap-3 mb-4">
               <button
                 onClick={() => handlePlayAll(favorites)}
-                className="w-12 h-12 bg-spotify-green rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg"
+                className="w-12 h-12 bg-spotify-green rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg glow-green"
               >
                 <IoPlay className="text-black text-xl ml-0.5" />
               </button>
               <button
                 onClick={() => handleShufflePlay(favorites)}
-                className="text-spotify-light-gray hover:text-white transition-colors"
+                className="text-spotify-light-gray hover:text-white transition-colors hover:scale-110"
               >
                 <IoShuffle className="text-2xl" />
               </button>
@@ -159,12 +159,7 @@ export default function LibraryPage() {
           ) : (
             <div>
               {favorites.map((song, i) => (
-                <SongRow
-                  key={song.id}
-                  song={song}
-                  index={i}
-                  songs={favorites}
-                />
+                <SongRow key={song.id} song={song} index={i} songs={favorites} />
               ))}
             </div>
           )}
@@ -179,7 +174,7 @@ export default function LibraryPage() {
             {history.length > 0 && (
               <button
                 onClick={handleClearHistory}
-                className="flex items-center gap-2 text-spotify-light-gray hover:text-white text-sm transition-colors"
+                className="flex items-center gap-2 text-spotify-light-gray hover:text-accent-red text-sm transition-colors"
               >
                 <IoTrash /> Clear History
               </button>
@@ -199,12 +194,7 @@ export default function LibraryPage() {
           ) : (
             <div>
               {history.map((song, i) => (
-                <SongRow
-                  key={`${song.id}-${i}`}
-                  song={song}
-                  index={i}
-                  songs={history}
-                />
+                <SongRow key={`${song.id}-${i}`} song={song} index={i} songs={history} />
               ))}
             </div>
           )}
@@ -213,24 +203,23 @@ export default function LibraryPage() {
 
       {/* Settings */}
       {tab === "settings" && (
-        <div className="max-w-md">
+        <div className="max-w-md space-y-4">
           <h2 className="text-xl font-bold text-white mb-6">Settings</h2>
 
-          <div className="bg-spotify-gray rounded-lg p-4 mb-4">
+          <div className="glass rounded-xl p-4">
             <h3 className="text-white font-semibold mb-3">Audio Quality</h3>
             <p className="text-spotify-light-gray text-sm mb-4">
-              Higher quality uses more data. Download quality also follows this
-              setting.
+              Higher quality uses more data. Download quality also follows this setting.
             </p>
             <div className="flex flex-col gap-2">
               {QUALITY_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => handleQualityChange(opt.value)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                     quality === opt.value
-                      ? "bg-spotify-green/20 border border-spotify-green"
-                      : "bg-spotify-dark-gray hover:bg-white/5"
+                      ? "bg-spotify-green/20 border border-spotify-green/40"
+                      : "glass hover:bg-white/5"
                   }`}
                 >
                   <span
@@ -241,17 +230,41 @@ export default function LibraryPage() {
                     {opt.label}
                   </span>
                   {quality === opt.value && (
-                    <div className="w-4 h-4 bg-spotify-green rounded-full" />
+                    <div className="w-4 h-4 bg-spotify-green rounded-full shadow glow-green" />
                   )}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="bg-spotify-gray rounded-lg p-4">
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-white font-semibold mb-3">Playback</h3>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-white text-sm font-medium">Autoplay</p>
+                <p className="text-spotify-light-gray text-xs">
+                  Automatically play similar songs when queue ends
+                </p>
+              </div>
+              <button
+                onClick={toggleAutoPlay}
+                className={`w-12 h-6 rounded-full transition-colors relative ${
+                  autoPlay ? "bg-spotify-green" : "bg-white/20"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow ${
+                    autoPlay ? "left-6" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <div className="glass rounded-xl p-4">
             <h3 className="text-white font-semibold mb-2">About</h3>
             <p className="text-spotify-light-gray text-sm mb-1">
-              AMAX Music Player v1.0.0
+              AMAX Music Player v2.0.0
             </p>
             <p className="text-spotify-light-gray text-xs">
               All copyrights reserved to cantarellabots and its affiliated parties.

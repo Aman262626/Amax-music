@@ -9,14 +9,14 @@ import MobileNav from "@/components/MobileNav";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AMAX - Music Player",
+  title: "AMAX - Premium Music Player",
   description:
-    "AMAX Music - Free music streaming. Search, play, and download songs with a premium experience.",
-  keywords: ["amax", "music", "player", "streaming", "download", "songs"],
+    "AMAX Music - Free premium music streaming. Search, play, download songs. Background playback, lyrics, smart recommendations.",
+  keywords: ["amax", "music", "player", "streaming", "download", "songs", "lyrics", "premium"],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
+  themeColor: "#0a0a0a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -41,15 +41,12 @@ export default function RootLayout({
       <body className={`${inter.className} bg-spotify-black`}>
         <PlayerProvider>
           <div className="h-screen flex flex-col overflow-hidden">
-            {/* Main area */}
             <div className="flex flex-1 overflow-hidden">
               <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-gradient-to-b from-spotify-dark-gray to-spotify-black lg:rounded-lg lg:m-2 lg:ml-0 pb-32 lg:pb-4">
+              <main className="flex-1 overflow-y-auto gradient-mesh lg:rounded-xl lg:m-2 lg:ml-0 pb-32 lg:pb-4">
                 {children}
               </main>
             </div>
-
-            {/* Player */}
             <Player />
             <MobileNav />
           </div>

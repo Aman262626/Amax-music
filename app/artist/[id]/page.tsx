@@ -68,7 +68,7 @@ export default function ArtistPage({
   return (
     <div>
       {/* Hero */}
-      <div className="relative h-64 sm:h-80 bg-gradient-to-b from-spotify-gray to-transparent">
+      <div className="relative h-64 sm:h-80 gradient-mesh-alt">
         {artist.image && (
           <Image
             src={artist.image}
@@ -78,7 +78,7 @@ export default function ArtistPage({
             unoptimized
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-spotify-black via-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent" />
         <div className="absolute bottom-0 left-0 p-4 sm:p-6 lg:p-8">
           <div className="flex items-center gap-2 mb-2">
             {artist.isVerified && (
@@ -101,13 +101,13 @@ export default function ArtistPage({
       <div className="px-4 sm:px-6 lg:px-8 flex items-center gap-4 py-4">
         <button
           onClick={handlePlayAll}
-          className="w-14 h-14 bg-spotify-green rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg"
+          className="w-14 h-14 bg-spotify-green rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg glow-green"
         >
           <IoPlay className="text-black text-2xl ml-1" />
         </button>
         <button
           onClick={handleShufflePlay}
-          className="text-spotify-light-gray hover:text-white transition-colors"
+          className="text-spotify-light-gray hover:text-white hover:scale-110 transition-all"
         >
           <IoShuffle className="text-3xl" />
         </button>
@@ -153,7 +153,7 @@ export default function ArtistPage({
       {artist.bio && (
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
           <h2 className="text-xl font-bold text-white mb-3">About</h2>
-          <div className="bg-spotify-gray rounded-lg p-4">
+          <div className="glass rounded-xl p-4">
             <p className="text-spotify-light-gray text-sm leading-relaxed">
               {artist.bio}
             </p>

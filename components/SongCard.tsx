@@ -3,64 +3,54 @@
 import Image from "next/image";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Song } from "@/lib/types";
-import { IoPlay, IoPause } from "react-icons/io5";
+import { IoPlay } from "react-icons/io5";
+import AudioVisualizer from "./AudioVisualizer";
 
 interface SongCardProps {
   song: Song;
   songs?: Song[];
-  index?: number;
 }
 
-export default function SongCard({ song, songs, index }: SongCardProps) {
-  const { currentSong, isPlaying, playSong, togglePlay } = usePlayer();
+export default function SongCard({ song, songs }: SongCardProps) {
+  const { playSong, currentSong, isPlaying } = usePlayer();
   const isActive = currentSong?.id === song.id;
 
-  const handleClick = () => {
-    if (isActive) {
-      togglePlay();
-    } else {
-      playSong(song, songs, index);
-    }
-  };
-
   return (
-    <div className="group bg-spotify-dark-gray hover:bg-spotify-card-hover rounded-lg p-3 sm:p-4 transition-all duration-200 cursor-pointer relative">
-      <div onClick={handleClick}>
-        <div className="relative aspect-square rounded-md overflow-hidden mb-3 shadow-lg">
-          <Image
-            src={song.image}
-            alt={song.name}
-            fill
-            className="object-cover"
-            unoptimized
-          />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-          <button
-            className="absolute bottom-2 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-spotify-green rounded-full flex items-center justify-center shadow-xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick();
-            }}
-          >
-            {isActive && isPlaying ? (
-              <IoPause className="text-black text-lg sm:text-xl" />
-            ) : (
-              <IoPlay className="text-black text-lg sm:text-xl ml-0.5" />
-            )}
-          </button>
+    <button
+      onClick={() => playSong(song, songs)}
+      className="group glass-card rounded-xl p-3 sm:p-4 text-left w-full"
+    >
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg">
+        <Image
+          src={song.image}
+          alt={song.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          unoptimized
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+          {isActive && isPlaying ? (
+            <div className="bg-spotify-green rounded-full w-10 h-10 flex items-center justify-center shadow-lg glow-green">
+              <AudioVisualizer size="small" />
+            </div>
+          ) : (
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-spotify-green rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+              <IoPlay className="text-black text-lg ml-0.5" />
+            </div>
+          )}
         </div>
-
-        <p
-          className={`text-sm font-semibold truncate mb-1 ${
-            isActive ? "text-spotify-green" : "text-white"
-          }`}
-        >
-          {song.name}
-        </p>
-        <p className="text-spotify-light-gray text-xs truncate">
-          {song.artist}
-        </p>
+        {isActive && (
+          <div className="absolute top-2 right-2">
+            <div className="w-2 h-2 bg-spotify-green rounded-full pulse-glow" />
+          </div>
+        )}
       </div>
-    </div>
+      <p className={`text-sm font-medium truncate ${isActive ? "text-spotify-green" : "text-white"}`}>
+        {song.name}
+      </p>
+      <p className="text-spotify-light-gray text-xs truncate mt-0.5">
+        {song.artist}
+      </p>
+    </button>
   );
 }

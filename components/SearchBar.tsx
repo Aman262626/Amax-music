@@ -1,65 +1,59 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { IoSearch, IoClose } from "react-icons/io5";
 
-interface SearchBarProps {
-  onSearch: (query: string) => void;
-  placeholder?: string;
-  autoFocus?: boolean;
-  initialValue?: string;
-}
-
-export default function SearchBar({
-  onSearch,
-  placeholder = "What do you want to listen to?",
-  autoFocus = false,
-  initialValue = "",
-}: SearchBarProps) {
-  const [value, setValue] = useState(initialValue);
+export default function SearchBar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") || "");
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [autoFocus]);
+    setQuery(searchParams.get("q") || "");
+  }, [searchParams]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setValue(newValue);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      onSearch(newValue);
-    }, 400);
-  };
+  const handleSearch = useCallback(
+    (val: string) => {
+      setQuery(val);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        if (val.trim()) {
+          router.push(`/search?q=${encodeURIComponent(val.trim())}`);
+        }
+      }, 400);
+    },
+    [router]
+  );
 
-  const handleClear = () => {
-    setValue("");
-    onSearch("");
+  const clearSearch = useCallback(() => {
+    setQuery("");
     inputRef.current?.focus();
-  };
+  }, []);
 
   return (
-    <div className="relative w-full max-w-lg">
-      <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-spotify-light-gray text-xl" />
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className="w-full bg-spotify-gray text-white text-sm rounded-full pl-10 pr-10 py-3 placeholder:text-spotify-light-gray focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-      />
-      {value && (
-        <button
-          onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-spotify-light-gray hover:text-white"
-        >
-          <IoClose className="text-xl" />
-        </button>
-      )}
+    <div className="relative max-w-md w-full">
+      <div className="relative flex items-center">
+        <IoSearch className="absolute left-3 text-spotify-light-gray text-lg" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Search songs, albums, artists..."
+          className="w-full pl-10 pr-10 py-2.5 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-1 focus:ring-spotify-green/50 transition-all"
+        />
+        {query && (
+          <button
+            onClick={clearSearch}
+            className="absolute right-3 text-spotify-light-gray hover:text-white transition-colors"
+          >
+            <IoClose className="text-lg" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
