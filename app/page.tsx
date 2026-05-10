@@ -4,17 +4,19 @@ import { useEffect, useState, useCallback } from "react";
 import SongCard from "@/components/SongCard";
 import AlbumCard from "@/components/AlbumCard";
 import PlaylistCard from "@/components/PlaylistCard";
+import SongRow from "@/components/SongRow";
+import { getHistory } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
 
 const CATEGORIES = [
-  { label: "Trending", query: "trending hits" },
-  { label: "Bollywood", query: "bollywood hits" },
-  { label: "Pop", query: "pop hits 2024" },
-  { label: "Hip Hop", query: "hip hop rap" },
-  { label: "Punjabi", query: "punjabi hits" },
-  { label: "Romantic", query: "romantic love songs" },
-  { label: "Party", query: "party dance songs" },
-  { label: "Chill", query: "lofi chill" },
+  { label: "Trending", query: "trending hits", gradient: "from-accent-pink to-accent-red" },
+  { label: "Bollywood", query: "bollywood hits", gradient: "from-accent-orange to-accent-pink" },
+  { label: "Pop", query: "pop hits 2024", gradient: "from-accent-blue to-accent-purple" },
+  { label: "Hip Hop", query: "hip hop rap", gradient: "from-yellow-500 to-accent-orange" },
+  { label: "Punjabi", query: "punjabi hits", gradient: "from-spotify-green to-accent-cyan" },
+  { label: "Romantic", query: "romantic love songs", gradient: "from-accent-red to-accent-pink" },
+  { label: "Party", query: "party dance songs", gradient: "from-accent-purple to-accent-pink" },
+  { label: "Chill", query: "lofi chill", gradient: "from-accent-cyan to-accent-blue" },
 ];
 
 const GREETINGS: Record<string, string> = {
@@ -37,6 +39,7 @@ export default function HomePage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [categorySongs, setCategorySongs] = useState<Record<string, Song[]>>({});
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTrending = useCallback(async () => {
@@ -66,6 +69,7 @@ export default function HomePage() {
   useEffect(() => {
     fetchTrending();
     fetchCategory(CATEGORIES[0].label, CATEGORIES[0].query);
+    setRecentlyPlayed(getHistory().slice(0, 8));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -77,8 +81,8 @@ export default function HomePage() {
   }, [activeCategory, categorySongs, fetchCategory]);
 
   const SkeletonCard = () => (
-    <div className="bg-spotify-dark-gray rounded-lg p-3 sm:p-4">
-      <div className="aspect-square skeleton rounded-md mb-3" />
+    <div className="glass-card rounded-xl p-3 sm:p-4">
+      <div className="aspect-square skeleton rounded-lg mb-3" />
       <div className="skeleton h-4 w-3/4 mb-2" />
       <div className="skeleton h-3 w-1/2" />
     </div>
@@ -87,9 +91,26 @@ export default function HomePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-        {greeting}
-      </h1>
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+          {greeting}
+        </h1>
+        <p className="text-spotify-light-gray text-sm">Discover music that moves you</p>
+      </div>
+
+      {/* Recently Played */}
+      {recentlyPlayed.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
+            Recently Played
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+            {recentlyPlayed.map((song, i) => (
+              <SongRow key={`recent-${song.id}-${i}`} song={song} index={i} songs={recentlyPlayed} showAlbum={false} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Category Chips */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
@@ -97,10 +118,10 @@ export default function HomePage() {
           <button
             key={cat.label}
             onClick={() => setActiveCategory(cat.label)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               activeCategory === cat.label
-                ? "bg-spotify-green text-black"
-                : "bg-spotify-gray text-white hover:bg-spotify-gray/80"
+                ? `bg-gradient-to-r ${cat.gradient} text-white shadow-lg`
+                : "glass text-white hover:bg-white/10"
             }`}
           >
             {cat.label}
@@ -114,12 +135,11 @@ export default function HomePage() {
           {activeCategory}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-          {(categorySongs[activeCategory] || []).slice(0, 12).map((song, i) => (
+          {(categorySongs[activeCategory] || []).slice(0, 12).map((song) => (
             <SongCard
               key={song.id}
               song={song}
               songs={categorySongs[activeCategory]}
-              index={i}
             />
           ))}
           {!categorySongs[activeCategory] &&
@@ -140,8 +160,8 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-            {songs.slice(0, 12).map((song, i) => (
-              <SongCard key={song.id} song={song} songs={songs} index={i} />
+            {songs.slice(0, 12).map((song) => (
+              <SongCard key={song.id} song={song} songs={songs} />
             ))}
           </div>
         )}
@@ -176,13 +196,13 @@ export default function HomePage() {
       )}
 
       {/* Footer */}
-      <footer className="text-center py-8 text-spotify-light-gray text-xs">
-        <p className="mb-1">
+      <footer className="text-center py-8">
+        <p className="text-spotify-light-gray text-xs mb-1">
           All copyrights reserved to cantarellabots and its affiliated parties.
         </p>
-        <p>
+        <p className="text-xs">
           Powered by{" "}
-          <span className="text-spotify-green font-semibold">AMAX Music</span>
+          <span className="gradient-text font-bold">AMAX Music</span>
         </p>
       </footer>
     </div>

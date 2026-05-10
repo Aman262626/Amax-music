@@ -4,31 +4,25 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Album } from "@/lib/types";
 
-interface AlbumCardProps {
-  album: Album;
-}
-
-export default function AlbumCard({ album }: AlbumCardProps) {
+export default function AlbumCard({ album }: { album: Album }) {
   return (
     <Link
       href={`/album/${album.id}`}
-      className="group bg-spotify-dark-gray hover:bg-spotify-card-hover rounded-lg p-3 sm:p-4 transition-all duration-200 cursor-pointer block"
+      className="group glass-card rounded-xl p-3 sm:p-4 block"
     >
-      <div className="relative aspect-square rounded-md overflow-hidden mb-3 shadow-lg">
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg">
         <Image
           src={album.image}
           alt={album.name}
           fill
-          className="object-cover"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
           unoptimized
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
-      <p className="text-white text-sm font-semibold truncate mb-1">
-        {album.name}
-      </p>
-      <p className="text-spotify-light-gray text-xs truncate">
-        {album.year ? `${album.year} • ` : ""}
-        {album.artist}
+      <p className="text-white text-sm font-medium truncate">{album.name}</p>
+      <p className="text-spotify-light-gray text-xs truncate mt-0.5">
+        {album.artist || "Album"}
       </p>
     </Link>
   );

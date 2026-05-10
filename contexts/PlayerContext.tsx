@@ -24,6 +24,9 @@ interface PlayerContextType {
   shuffle: boolean;
   repeat: RepeatMode;
   isBuffering: boolean;
+  playbackSpeed: number;
+  sleepTimer: number;
+  autoPlay: boolean;
 
   playSong: (song: Song, songList?: Song[], index?: number) => void;
   togglePlay: () => void;
@@ -39,6 +42,9 @@ interface PlayerContextType {
   removeFromQueue: (index: number) => void;
   clearQueue: () => void;
   playQueue: (songs: Song[], startIndex?: number) => void;
+  setPlaybackSpeed: (speed: number) => void;
+  setSleepTimer: (minutes: number) => void;
+  toggleAutoPlay: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -51,6 +57,7 @@ export function usePlayer() {
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [queue, setQueue] = useState<Song[]>([]);
   const [originalQueue, setOriginalQueue] = useState<Song[]>([]);
@@ -62,6 +69,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState<RepeatMode>("off");
   const [isBuffering, setIsBuffering] = useState(false);
+  const [playbackSpeed, setPlaybackSpeedState] = useState(1);
+  const [sleepTimer, setSleepTimerState] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -114,10 +124,28 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (repeat === "all" && queue.length > 0) {
         return 0;
       }
+      if (autoPlay && currentSong) {
+        fetchSuggestions(currentSong.id);
+      }
       setIsPlaying(false);
       return prev;
     });
-  }, [repeat, queue.length]);
+  }, [repeat, queue.length, autoPlay, currentSong]);
+
+  const fetchSuggestions = useCallback(async (songId: string) => {
+    try {
+      const res = await fetch(`/api/songs/${songId}/suggestions`);
+      const data = await res.json();
+      if (data.songs && data.songs.length > 0) {
+        const suggestions = data.songs as Song[];
+        setQueue((prev) => [...prev, ...suggestions]);
+        setOriginalQueue((prev) => [...prev, ...suggestions]);
+        setQueueIndex((prev) => prev + 1);
+      }
+    } catch {
+      // silently fail
+    }
+  }, []);
 
   useEffect(() => {
     if (queueIndex >= 0 && queueIndex < queue.length) {
@@ -149,6 +177,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setProgress(0);
       setDuration(song.duration || 0);
       audio.src = url;
+      audio.playbackRate = playbackSpeed;
       audio.play().catch(() => {});
       setIsPlaying(true);
       addToHistory(song);
@@ -164,7 +193,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [getStreamUrl]
+    [getStreamUrl, playbackSpeed]
   );
 
   const playSong = useCallback(
@@ -212,11 +241,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     let nextIdx = queueIndex + 1;
     if (nextIdx >= queue.length) {
       nextIdx = repeat === "all" ? 0 : queueIndex;
-      if (repeat !== "all") return;
+      if (repeat !== "all") {
+        if (autoPlay && currentSong) {
+          fetchSuggestions(currentSong.id);
+        }
+        return;
+      }
     }
     setQueueIndex(nextIdx);
     loadAndPlay(queue[nextIdx]);
-  }, [queue, queueIndex, repeat, loadAndPlay]);
+  }, [queue, queueIndex, repeat, loadAndPlay, autoPlay, currentSong, fetchSuggestions]);
 
   const previous = useCallback(() => {
     const audio = audioRef.current;
@@ -318,14 +352,42 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [shuffle, loadAndPlay]
   );
 
+  const setPlaybackSpeed = useCallback((speed: number) => {
+    setPlaybackSpeedState(speed);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  }, []);
+
+  const setSleepTimer = useCallback((minutes: number) => {
+    if (sleepTimerRef.current) {
+      clearTimeout(sleepTimerRef.current);
+      sleepTimerRef.current = null;
+    }
+    setSleepTimerState(minutes);
+    if (minutes > 0) {
+      sleepTimerRef.current = setTimeout(() => {
+        audioRef.current?.pause();
+        setSleepTimerState(0);
+      }, minutes * 60 * 1000);
+    }
+  }, []);
+
+  const toggleAutoPlay = useCallback(() => {
+    setAutoPlay((prev) => !prev);
+  }, []);
+
   useEffect(() => {
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", resume);
       navigator.mediaSession.setActionHandler("pause", pause);
       navigator.mediaSession.setActionHandler("previoustrack", previous);
       navigator.mediaSession.setActionHandler("nexttrack", next);
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime !== undefined) seek(details.seekTime);
+      });
     }
-  }, [resume, pause, previous, next]);
+  }, [resume, pause, previous, next, seek]);
 
   return (
     <PlayerContext.Provider
@@ -341,6 +403,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         shuffle,
         repeat,
         isBuffering,
+        playbackSpeed,
+        sleepTimer,
+        autoPlay,
         playSong,
         togglePlay,
         pause,
@@ -355,6 +420,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         removeFromQueue,
         clearQueue,
         playQueue,
+        setPlaybackSpeed,
+        setSleepTimer,
+        toggleAutoPlay,
       }}
     >
       {children}

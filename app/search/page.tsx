@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import SearchBar from "@/components/SearchBar";
+import { useState, useCallback, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import SongCard from "@/components/SongCard";
 import SongRow from "@/components/SongRow";
 import AlbumCard from "@/components/AlbumCard";
 import ArtistCard from "@/components/ArtistCard";
 import PlaylistCard from "@/components/PlaylistCard";
 import type { Song, Album, Artist, Playlist } from "@/lib/types";
-import { IoMusicalNotes, IoDisc, IoPerson, IoList } from "react-icons/io5";
+import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch } from "react-icons/io5";
 
 type TabType = "all" | "songs" | "albums" | "artists" | "playlists";
 
@@ -21,22 +21,24 @@ const TABS: { key: TabType; label: string; icon: React.ElementType }[] = [
 ];
 
 const BROWSE_CATEGORIES = [
-  { label: "Bollywood", color: "from-pink-500 to-rose-600", query: "bollywood" },
-  { label: "Pop", color: "from-indigo-500 to-blue-600", query: "pop hits" },
-  { label: "Hip Hop", color: "from-yellow-600 to-orange-700", query: "hip hop" },
-  { label: "Punjabi", color: "from-green-500 to-emerald-600", query: "punjabi" },
-  { label: "Romantic", color: "from-red-500 to-pink-600", query: "romantic" },
-  { label: "Party", color: "from-purple-500 to-violet-600", query: "party" },
-  { label: "Devotional", color: "from-amber-500 to-yellow-600", query: "devotional" },
-  { label: "Lofi", color: "from-teal-500 to-cyan-600", query: "lofi" },
-  { label: "Classical", color: "from-stone-500 to-neutral-600", query: "classical" },
-  { label: "EDM", color: "from-fuchsia-500 to-pink-600", query: "edm electronic" },
-  { label: "Rock", color: "from-red-600 to-red-800", query: "rock" },
-  { label: "Indie", color: "from-sky-500 to-blue-600", query: "indie" },
+  { label: "Bollywood", gradient: "from-accent-pink to-accent-red", query: "bollywood" },
+  { label: "Pop", gradient: "from-accent-blue to-accent-purple", query: "pop hits" },
+  { label: "Hip Hop", gradient: "from-yellow-500 to-accent-orange", query: "hip hop" },
+  { label: "Punjabi", gradient: "from-spotify-green to-accent-cyan", query: "punjabi" },
+  { label: "Romantic", gradient: "from-accent-red to-accent-pink", query: "romantic" },
+  { label: "Party", gradient: "from-accent-purple to-accent-pink", query: "party" },
+  { label: "Devotional", gradient: "from-amber-500 to-yellow-600", query: "devotional" },
+  { label: "Lofi", gradient: "from-accent-cyan to-accent-blue", query: "lofi" },
+  { label: "Classical", gradient: "from-stone-400 to-neutral-600", query: "classical" },
+  { label: "EDM", gradient: "from-fuchsia-500 to-accent-pink", query: "edm electronic" },
+  { label: "Rock", gradient: "from-red-600 to-red-800", query: "rock" },
+  { label: "Indie", gradient: "from-sky-500 to-accent-blue", query: "indie" },
 ];
 
-export default function SearchPage() {
-  const [query, setQuery] = useState("");
+function SearchContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlQuery = searchParams.get("q") || "";
   const [tab, setTab] = useState<TabType>("all");
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -45,8 +47,7 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const handleSearch = useCallback(async (q: string) => {
-    setQuery(q);
+  const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
       setSongs([]);
       setAlbums([]);
@@ -72,11 +73,17 @@ export default function SearchPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (urlQuery) {
+      doSearch(urlQuery);
+    }
+  }, [urlQuery, doSearch]);
+
   const handleCategoryClick = useCallback(
-    (categoryQuery: string) => {
-      handleSearch(categoryQuery);
+    (query: string) => {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
     },
-    [handleSearch]
+    [router]
   );
 
   const hasResults =
@@ -92,14 +99,25 @@ export default function SearchPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">
           Search
         </h1>
-        <SearchBar
-          onSearch={handleSearch}
-          autoFocus
-          initialValue={query}
-        />
+        <div className="relative max-w-lg w-full">
+          <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-spotify-light-gray text-lg" />
+          <input
+            type="text"
+            defaultValue={urlQuery}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.trim()) {
+                router.push(`/search?q=${encodeURIComponent(val.trim())}`);
+              }
+            }}
+            placeholder="Search songs, albums, artists..."
+            className="w-full pl-10 pr-4 py-3 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-1 focus:ring-spotify-green/50 transition-all"
+            autoFocus
+          />
+        </div>
       </div>
 
-      {/* Show browse categories when no search */}
+      {/* Browse categories when no search */}
       {!searched && (
         <section>
           <h2 className="text-xl font-bold text-white mb-4">Browse All</h2>
@@ -108,9 +126,9 @@ export default function SearchPage() {
               <button
                 key={cat.label}
                 onClick={() => handleCategoryClick(cat.query)}
-                className={`relative h-28 sm:h-36 rounded-lg overflow-hidden bg-gradient-to-br ${cat.color} p-4 text-left hover:scale-[1.02] transition-transform`}
+                className={`relative h-28 sm:h-36 rounded-xl overflow-hidden bg-gradient-to-br ${cat.gradient} p-4 text-left hover:scale-[1.02] transition-all shadow-lg`}
               >
-                <span className="text-white font-bold text-base sm:text-lg">
+                <span className="text-white font-bold text-base sm:text-lg drop-shadow-md">
                   {cat.label}
                 </span>
               </button>
@@ -128,10 +146,10 @@ export default function SearchPage() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   tab === t.key
-                    ? "bg-spotify-green text-black"
-                    : "bg-spotify-gray text-white hover:bg-spotify-gray/80"
+                    ? "bg-white text-black"
+                    : "glass text-white hover:bg-white/10"
                 }`}
               >
                 {t.label}
@@ -145,8 +163,9 @@ export default function SearchPage() {
             </div>
           ) : !hasResults ? (
             <div className="text-center py-20">
-              <p className="text-spotify-light-gray text-lg mb-2">
-                No results found for &ldquo;{query}&rdquo;
+              <p className="text-4xl mb-4">🔍</p>
+              <p className="text-white text-lg font-semibold mb-2">
+                No results found for &ldquo;{urlQuery}&rdquo;
               </p>
               <p className="text-spotify-light-gray text-sm">
                 Try different keywords or check the spelling.
@@ -162,24 +181,14 @@ export default function SearchPage() {
                   )}
                   {tab === "all" ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                      {songs.slice(0, 6).map((song, i) => (
-                        <SongCard
-                          key={song.id}
-                          song={song}
-                          songs={songs}
-                          index={i}
-                        />
+                      {songs.slice(0, 6).map((song) => (
+                        <SongCard key={song.id} song={song} songs={songs} />
                       ))}
                     </div>
                   ) : (
                     <div>
                       {songs.map((song, i) => (
-                        <SongRow
-                          key={song.id}
-                          song={song}
-                          index={i}
-                          songs={songs}
-                        />
+                        <SongRow key={song.id} song={song} index={i} songs={songs} />
                       ))}
                     </div>
                   )}
@@ -193,11 +202,9 @@ export default function SearchPage() {
                     <h2 className="text-xl font-bold text-white mb-3">Albums</h2>
                   )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                    {albums
-                      .slice(0, tab === "all" ? 6 : albums.length)
-                      .map((album) => (
-                        <AlbumCard key={album.id} album={album} />
-                      ))}
+                    {albums.slice(0, tab === "all" ? 6 : albums.length).map((album) => (
+                      <AlbumCard key={album.id} album={album} />
+                    ))}
                   </div>
                 </section>
               )}
@@ -206,42 +213,45 @@ export default function SearchPage() {
               {(tab === "all" || tab === "artists") && artists.length > 0 && (
                 <section className="mb-8">
                   {tab === "all" && (
-                    <h2 className="text-xl font-bold text-white mb-3">
-                      Artists
-                    </h2>
+                    <h2 className="text-xl font-bold text-white mb-3">Artists</h2>
                   )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                    {artists
-                      .slice(0, tab === "all" ? 6 : artists.length)
-                      .map((artist) => (
-                        <ArtistCard key={artist.id} artist={artist} />
-                      ))}
+                    {artists.slice(0, tab === "all" ? 6 : artists.length).map((artist) => (
+                      <ArtistCard key={artist.id} artist={artist} />
+                    ))}
                   </div>
                 </section>
               )}
 
               {/* Playlists */}
-              {(tab === "all" || tab === "playlists") &&
-                playlists.length > 0 && (
-                  <section className="mb-8">
-                    {tab === "all" && (
-                      <h2 className="text-xl font-bold text-white mb-3">
-                        Playlists
-                      </h2>
-                    )}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                      {playlists
-                        .slice(0, tab === "all" ? 6 : playlists.length)
-                        .map((pl) => (
-                          <PlaylistCard key={pl.id} playlist={pl} />
-                        ))}
-                    </div>
-                  </section>
-                )}
+              {(tab === "all" || tab === "playlists") && playlists.length > 0 && (
+                <section className="mb-8">
+                  {tab === "all" && (
+                    <h2 className="text-xl font-bold text-white mb-3">Playlists</h2>
+                  )}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                    {playlists.slice(0, tab === "all" ? 6 : playlists.length).map((pl) => (
+                      <PlaylistCard key={pl.id} playlist={pl} />
+                    ))}
+                  </div>
+                </section>
+              )}
             </>
           )}
         </>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-spotify-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }

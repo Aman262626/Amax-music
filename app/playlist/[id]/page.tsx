@@ -62,7 +62,7 @@ export default function PlaylistPage({
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col sm:flex-row gap-6 mb-6">
-          <div className="skeleton w-48 h-48 rounded-lg" />
+          <div className="skeleton w-48 h-48 rounded-xl" />
           <div className="flex-1">
             <div className="skeleton h-4 w-20 mb-2" />
             <div className="skeleton h-8 w-60 mb-2" />
@@ -84,9 +84,10 @@ export default function PlaylistPage({
   return (
     <div>
       {/* Header */}
-      <div className="bg-gradient-to-b from-purple-900/40 to-transparent p-4 sm:p-6 lg:p-8">
+      <div className="relative p-4 sm:p-6 lg:p-8 overflow-hidden">
+        <div className="song-backdrop" style={{ background: `url(${playlist.image}) center/cover no-repeat` }} />
         <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end">
-          <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-lg overflow-hidden shadow-2xl flex-shrink-0">
+          <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-xl overflow-hidden shadow-2xl flex-shrink-0">
             <Image
               src={playlist.image}
               alt={playlist.name}
@@ -96,7 +97,7 @@ export default function PlaylistPage({
             />
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-white text-xs uppercase tracking-wider mb-1">
+            <p className="text-white text-xs uppercase tracking-widest mb-1">
               Playlist
             </p>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-2">
@@ -131,19 +132,19 @@ export default function PlaylistPage({
       <div className="px-4 sm:px-6 lg:px-8 flex items-center gap-4 mb-4">
         <button
           onClick={handlePlayAll}
-          className="w-14 h-14 bg-spotify-green rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg"
+          className="w-14 h-14 bg-spotify-green rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg glow-green"
         >
           <IoPlay className="text-black text-2xl ml-1" />
         </button>
         <button
           onClick={handleShufflePlay}
-          className="text-spotify-light-gray hover:text-white transition-colors"
+          className="text-spotify-light-gray hover:text-white hover:scale-110 transition-all"
         >
           <IoShuffle className="text-3xl" />
         </button>
         <button
           onClick={handleDownloadAll}
-          className="text-spotify-light-gray hover:text-white transition-colors"
+          className="text-spotify-light-gray hover:text-white hover:scale-110 transition-all"
           title="Download All"
         >
           <IoCloudDownload className="text-2xl" />

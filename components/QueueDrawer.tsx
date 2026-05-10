@@ -2,54 +2,68 @@
 
 import Image from "next/image";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { formatDuration } from "@/lib/utils";
 import { IoClose, IoTrash } from "react-icons/io5";
-import { IoMdPlay } from "react-icons/io";
+import AudioVisualizer from "./AudioVisualizer";
 
 interface QueueDrawerProps {
   onClose: () => void;
 }
 
 export default function QueueDrawer({ onClose }: QueueDrawerProps) {
-  const { queue, queueIndex, currentSong, removeFromQueue, clearQueue, playSong } =
-    usePlayer();
+  const {
+    currentSong,
+    queue,
+    queueIndex,
+    isPlaying,
+    autoPlay,
+    removeFromQueue,
+    clearQueue,
+    playSong,
+    toggleAutoPlay,
+  } = usePlayer();
 
   const upcomingSongs = queue.slice(queueIndex + 1);
 
   return (
-    <div className="fixed inset-0 z-50 lg:absolute lg:right-0 lg:top-auto lg:bottom-full lg:left-auto lg:w-[380px] lg:h-[500px] lg:inset-auto">
-      <div
-        className="absolute inset-0 bg-black/50 lg:hidden"
-        onClick={onClose}
-      />
-      <div className="relative h-full lg:h-auto lg:max-h-[500px] bg-spotify-dark-gray lg:rounded-lg overflow-hidden flex flex-col ml-auto w-full max-w-md lg:max-w-none shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-spotify-gray/30">
-          <h2 className="text-white font-bold text-lg">Queue</h2>
-          <div className="flex items-center gap-2">
+    <div className="fixed inset-0 z-[55] lg:inset-auto lg:fixed lg:right-4 lg:bottom-[100px] lg:w-[380px] lg:h-[500px] lg:rounded-2xl glass-strong overflow-hidden slide-up">
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <h3 className="text-white font-bold text-lg">Queue</h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleAutoPlay}
+            className={`text-xs px-3 py-1 rounded-full transition-all ${
+              autoPlay ? "bg-spotify-green/20 text-spotify-green border border-spotify-green/30" : "glass text-spotify-light-gray"
+            }`}
+          >
+            Autoplay {autoPlay ? "On" : "Off"}
+          </button>
+          {upcomingSongs.length > 0 && (
             <button
               onClick={clearQueue}
-              className="text-spotify-light-gray hover:text-white text-sm px-3 py-1 rounded-full border border-spotify-gray/50 hover:border-white/30 transition-colors"
+              className="text-spotify-light-gray hover:text-white p-1.5 glass rounded-full transition-colors"
+              title="Clear queue"
             >
-              Clear
+              <IoTrash className="text-sm" />
             </button>
-            <button
-              onClick={onClose}
-              className="text-spotify-light-gray hover:text-white p-1"
-            >
-              <IoClose className="text-xl" />
-            </button>
-          </div>
+          )}
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white p-1.5 glass rounded-full transition-colors"
+          >
+            <IoClose className="text-lg" />
+          </button>
         </div>
+      </div>
 
-        {/* Now Playing */}
+      <div className="overflow-y-auto h-[calc(100%-60px)] p-3">
+        {/* Now playing */}
         {currentSong && (
-          <div className="p-4 pb-2">
-            <p className="text-spotify-light-gray text-xs font-bold uppercase tracking-wider mb-2">
+          <div className="mb-4">
+            <p className="text-spotify-light-gray text-xs font-bold uppercase tracking-widest mb-2 px-1">
               Now Playing
             </p>
-            <div className="flex items-center gap-3 bg-spotify-gray/50 rounded-lg p-2">
-              <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
+            <div className="flex items-center gap-3 p-2 glass rounded-xl">
+              <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                 <Image
                   src={currentSong.image}
                   alt={currentSong.name}
@@ -57,6 +71,11 @@ export default function QueueDrawer({ onClose }: QueueDrawerProps) {
                   className="object-cover"
                   unoptimized
                 />
+                {isPlaying && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <AudioVisualizer size="tiny" />
+                  </div>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-spotify-green text-sm font-medium truncate">
@@ -66,30 +85,24 @@ export default function QueueDrawer({ onClose }: QueueDrawerProps) {
                   {currentSong.artist}
                 </p>
               </div>
-              <span className="text-spotify-light-gray text-xs">
-                {formatDuration(currentSong.duration)}
-              </span>
             </div>
           </div>
         )}
 
-        {/* Up Next */}
-        <div className="flex-1 overflow-y-auto p-4 pt-2">
-          <p className="text-spotify-light-gray text-xs font-bold uppercase tracking-wider mb-2">
-            Next Up ({upcomingSongs.length})
-          </p>
-          {upcomingSongs.length === 0 ? (
-            <p className="text-spotify-light-gray text-sm text-center py-8">
-              Queue is empty. Add songs to queue!
+        {/* Upcoming */}
+        {upcomingSongs.length > 0 ? (
+          <div>
+            <p className="text-spotify-light-gray text-xs font-bold uppercase tracking-widest mb-2 px-1">
+              Next Up • {upcomingSongs.length} song{upcomingSongs.length > 1 ? "s" : ""}
             </p>
-          ) : (
-            <div className="flex flex-col gap-1">
+            <div className="space-y-1">
               {upcomingSongs.map((song, i) => (
                 <div
                   key={`${song.id}-${i}`}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-spotify-gray/50 group transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
+                  onClick={() => playSong(song, queue, queueIndex + 1 + i)}
                 >
-                  <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                  <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                     <Image
                       src={song.image}
                       alt={song.name}
@@ -97,12 +110,6 @@ export default function QueueDrawer({ onClose }: QueueDrawerProps) {
                       className="object-cover"
                       unoptimized
                     />
-                    <button
-                      onClick={() => playSong(song, queue, queueIndex + 1 + i)}
-                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <IoMdPlay className="text-white text-lg" />
-                    </button>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-white text-sm truncate">{song.name}</p>
@@ -110,20 +117,28 @@ export default function QueueDrawer({ onClose }: QueueDrawerProps) {
                       {song.artist}
                     </p>
                   </div>
-                  <span className="text-spotify-light-gray text-xs">
-                    {formatDuration(song.duration)}
-                  </span>
                   <button
-                    onClick={() => removeFromQueue(queueIndex + 1 + i)}
-                    className="text-spotify-light-gray hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromQueue(queueIndex + 1 + i);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-spotify-light-gray hover:text-accent-red p-1 transition-all"
                   >
-                    <IoTrash className="text-sm" />
+                    <IoClose className="text-sm" />
                   </button>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-4xl mb-3">🎵</p>
+            <p className="text-white font-semibold text-sm mb-1">Queue is empty</p>
+            <p className="text-spotify-light-gray text-xs">
+              {autoPlay ? "Songs will be added automatically" : "Add songs to play next"}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

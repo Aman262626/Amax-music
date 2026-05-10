@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IoHome, IoSearch, IoLibrary } from "react-icons/io5";
 import { BiMusic } from "react-icons/bi";
+import { IoMdTrendingUp } from "react-icons/io";
 
 const NAV_ITEMS = [
   { href: "/", icon: IoHome, label: "Home" },
@@ -15,30 +16,32 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-[280px] min-w-[280px] bg-black h-full gap-2 p-2">
-      {/* Logo */}
-      <div className="bg-spotify-dark-gray rounded-lg p-4 pb-2">
-        <Link href="/" className="flex items-center gap-2 mb-4 px-2">
-          <BiMusic className="text-spotify-green text-3xl" />
-          <span className="text-white font-bold text-xl tracking-tight">
+    <aside className="hidden lg:flex flex-col w-[260px] gap-2 p-2 flex-shrink-0">
+      {/* Logo & Nav */}
+      <div className="glass rounded-xl p-4 pb-2">
+        <Link href="/" className="flex items-center gap-2 mb-5 px-2 group">
+          <div className="w-8 h-8 bg-gradient-to-br from-spotify-green to-accent-cyan rounded-lg flex items-center justify-center shadow-lg group-hover:glow-green transition-all">
+            <BiMusic className="text-black text-lg" />
+          </div>
+          <span className="text-white font-bold text-xl tracking-tight gradient-text">
             AMAX
           </span>
         </Link>
 
         <nav className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
+            const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors font-semibold text-sm ${
-                  isActive
-                    ? "text-white"
-                    : "text-spotify-light-gray hover:text-white"
+                className={`flex items-center gap-4 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                  active
+                    ? "text-white bg-white/10"
+                    : "text-spotify-light-gray hover:text-white hover:bg-white/5"
                 }`}
               >
-                <item.icon className="text-2xl" />
+                <item.icon className={`text-xl ${active ? "text-spotify-green" : ""}`} />
                 {item.label}
               </Link>
             );
@@ -46,43 +49,60 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Library section */}
-      <div className="bg-spotify-dark-gray rounded-lg flex-1 overflow-y-auto p-4">
+      {/* Quick Actions */}
+      <div className="glass rounded-xl p-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-spotify-light-gray font-bold text-sm flex items-center gap-2">
-            <IoLibrary className="text-xl" />
-            Your Library
-          </h2>
+          <p className="text-spotify-light-gray text-xs font-bold uppercase tracking-widest">
+            Quick Access
+          </p>
         </div>
 
-        <div className="bg-spotify-gray rounded-lg p-4 mb-4">
-          <h3 className="text-white font-bold text-sm mb-1">
-            Create your first playlist
-          </h3>
-          <p className="text-spotify-light-gray text-xs mb-3">
-            It&apos;s easy, we&apos;ll help you
-          </p>
+        <div className="space-y-2">
           <Link
-            href="/library"
-            className="inline-block bg-white text-black text-xs font-bold px-4 py-2 rounded-full hover:scale-105 transition-transform"
+            href="/search?q=trending"
+            className="flex items-center gap-3 p-3 glass-card rounded-xl"
           >
-            Browse Library
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-pink to-accent-red rounded-lg flex items-center justify-center">
+              <IoMdTrendingUp className="text-white text-lg" />
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Trending</p>
+              <p className="text-spotify-light-gray text-xs">Top charts</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/search?q=bollywood hits"
+            className="flex items-center gap-3 p-3 glass-card rounded-xl"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-pink rounded-lg flex items-center justify-center">
+              <span className="text-lg">🎶</span>
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Bollywood Hits</p>
+              <p className="text-spotify-light-gray text-xs">Latest & greatest</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/search?q=chill lofi"
+            className="flex items-center gap-3 p-3 glass-card rounded-xl"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-purple to-accent-blue rounded-lg flex items-center justify-center">
+              <span className="text-lg">🎧</span>
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Chill Vibes</p>
+              <p className="text-spotify-light-gray text-xs">Lofi & relaxing</p>
+            </div>
           </Link>
         </div>
 
-        <div className="bg-spotify-gray rounded-lg p-4">
-          <h3 className="text-white font-bold text-sm mb-1">
-            Find some songs
-          </h3>
-          <p className="text-spotify-light-gray text-xs mb-3">
-            We&apos;ll keep you updated on new songs
+        <div className="mt-6 p-4 glass-card rounded-xl text-center">
+          <p className="text-white text-sm font-semibold mb-1">AMAX Premium</p>
+          <p className="text-spotify-light-gray text-xs">
+            Unlimited music streaming with downloads
           </p>
-          <Link
-            href="/search"
-            className="inline-block bg-white text-black text-xs font-bold px-4 py-2 rounded-full hover:scale-105 transition-transform"
-          >
-            Browse Songs
-          </Link>
         </div>
       </div>
     </aside>
