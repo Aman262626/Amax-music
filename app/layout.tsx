@@ -48,7 +48,7 @@ export default function RootLayout({
             </Suspense>
             <div className="flex flex-1 overflow-hidden">
               <Sidebar />
-              <main className="flex-1 overflow-y-auto gradient-mesh lg:rounded-xl lg:m-2 lg:ml-0 pb-32 lg:pb-4">
+              <main className="flex-1 overflow-y-auto gradient-mesh lg:rounded-xl lg:m-2 lg:ml-0 pb-36 lg:pb-4">
                 {children}
               </main>
             </div>

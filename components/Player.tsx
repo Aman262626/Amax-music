@@ -374,7 +374,8 @@ export default function Player() {
       {/* Mobile Mini Player */}
       {!showMobilePlayer && (
         <div
-          className="lg:hidden fixed bottom-[56px] left-2 right-2 z-30 glass-strong rounded-xl overflow-hidden cursor-pointer"
+          className="lg:hidden fixed left-2 right-2 z-30 glass-strong rounded-xl overflow-hidden cursor-pointer"
+          style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}
           onClick={() => setShowMobilePlayer(true)}
         >
           <div
@@ -651,7 +652,7 @@ export default function Player() {
 
       {/* Lyrics Panel */}
       {showLyrics && currentSong && (
-        <LyricsPanel songId={currentSong.id} songName={currentSong.name} onClose={() => setShowLyrics(false)} />
+        <LyricsPanel songId={currentSong.id} songName={currentSong.name} artist={currentSong.artist} onClose={() => setShowLyrics(false)} />
       )}
 
       {/* Queue Drawer */}

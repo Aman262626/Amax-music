@@ -183,6 +183,8 @@ export default function PartyMode() {
       return;
     }
 
+    let justLoadedSong = false;
+
     const poll = async () => {
       try {
         const res = await fetch(
@@ -202,15 +204,17 @@ export default function PartyMode() {
             const song = await songRes.json();
             if (song && !song.error) {
               playSong(song);
+              justLoadedSong = true;
             }
           } catch {
             // ignore
           }
         }
 
-        if (!isHost && data.isPlaying !== isPlaying) {
+        if (!isHost && !justLoadedSong && data.isPlaying !== isPlaying) {
           togglePlay();
         }
+        justLoadedSong = false;
       } catch {
         // ignore
       }
@@ -227,8 +231,15 @@ export default function PartyMode() {
 
   const handleCopyCode = useCallback(() => {
     if (!roomId) return;
-    const shareText = `Join my AMAX Music party!\nCode: ${roomId}\nLink: ${window.location.origin}?party=${roomId}`;
-    navigator.clipboard.writeText(shareText).catch(() => {});
+    const link = `${window.location.origin}?party=${roomId}`;
+    const shareText = `Join my AMAX Music party!\nCode: ${roomId}\nLink: ${link}`;
+    if (navigator.share) {
+      navigator.share({ title: "AMAX Party", text: shareText, url: link }).catch(() => {
+        navigator.clipboard.writeText(shareText).catch(() => {});
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).catch(() => {});
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [roomId]);
