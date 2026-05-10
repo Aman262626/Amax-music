@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import Link from "next/link";
 import type { Album } from "@/lib/types";
 
@@ -11,7 +11,7 @@ export default function AlbumCard({ album }: { album: Album }) {
       className="group glass-card rounded-xl p-3 sm:p-4 block"
     >
       <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg">
-        <Image
+        <SafeImage
           src={album.image}
           alt={album.name}
           fill

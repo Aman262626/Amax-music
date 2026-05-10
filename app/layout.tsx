@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import Player from "@/components/Player";
 import MobileNav from "@/components/MobileNav";
 import PartyJoinHandler from "@/components/PartyJoinHandler";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,21 +42,23 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-spotify-black`}>
-        <PlayerProvider>
-          <div className="h-screen flex flex-col overflow-hidden">
-            <Suspense fallback={null}>
-              <PartyJoinHandler />
-            </Suspense>
-            <div className="flex flex-1 overflow-hidden">
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto gradient-mesh lg:rounded-xl lg:m-2 lg:ml-0 pb-36 lg:pb-4">
-                {children}
-              </main>
+        <ErrorBoundary>
+          <PlayerProvider>
+            <div className="h-screen flex flex-col overflow-hidden">
+              <Suspense fallback={null}>
+                <PartyJoinHandler />
+              </Suspense>
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto gradient-mesh lg:rounded-xl lg:m-2 lg:ml-0 pb-36 lg:pb-4">
+                  {children}
+                </main>
+              </div>
+              <Player />
+              <MobileNav />
             </div>
-            <Player />
-            <MobileNav />
-          </div>
-        </PlayerProvider>
+          </PlayerProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

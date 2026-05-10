@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Song } from "@/lib/types";
 import { formatDuration, getBestDownloadUrl } from "@/lib/utils";
@@ -139,7 +139,7 @@ export default function SongPreviewScroll({ songs, title }: SongPreviewScrollPro
             >
               {/* Album art with preview button */}
               <div className="relative aspect-square">
-                <Image
+                <SafeImage
                   src={song.image}
                   alt={song.name}
                   fill

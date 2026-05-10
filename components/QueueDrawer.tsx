@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { IoClose, IoTrash } from "react-icons/io5";
 import AudioVisualizer from "./AudioVisualizer";
@@ -64,7 +64,7 @@ export default function QueueDrawer({ onClose }: QueueDrawerProps) {
             </p>
             <div className="flex items-center gap-3 p-2 glass rounded-xl">
               <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                <Image
+                <SafeImage
                   src={currentSong.image}
                   alt={currentSong.name}
                   fill
@@ -103,7 +103,7 @@ export default function QueueDrawer({ onClose }: QueueDrawerProps) {
                   onClick={() => playSong(song, queue, queueIndex + 1 + i)}
                 >
                   <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                    <Image
+                    <SafeImage
                       src={song.image}
                       alt={song.name}
                       fill

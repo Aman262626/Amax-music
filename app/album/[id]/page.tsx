@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import SongRow from "@/components/SongRow";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Album } from "@/lib/types";
@@ -87,7 +87,7 @@ export default function AlbumPage({ params }: { params: Promise<{ id: string }> 
         />
         <div className="relative z-10 flex flex-col sm:flex-row gap-6 items-center sm:items-end">
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-xl overflow-hidden shadow-2xl flex-shrink-0">
-            <Image
+            <SafeImage
               src={album.image}
               alt={album.name}
               fill
