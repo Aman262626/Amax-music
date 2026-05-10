@@ -1,0 +1,70 @@
+import type { Song } from "./types";
+
+const FAVORITES_KEY = "spotify_favorites";
+const HISTORY_KEY = "spotify_history";
+const QUALITY_KEY = "spotify_quality";
+const MAX_HISTORY = 100;
+
+function getItem<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setItem(key: string, value: unknown): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // storage full or unavailable
+  }
+}
+
+export function getFavorites(): Song[] {
+  return getItem<Song[]>(FAVORITES_KEY, []);
+}
+
+export function addFavorite(song: Song): Song[] {
+  const favorites = getFavorites().filter((s) => s.id !== song.id);
+  favorites.unshift(song);
+  setItem(FAVORITES_KEY, favorites);
+  return favorites;
+}
+
+export function removeFavorite(songId: string): Song[] {
+  const favorites = getFavorites().filter((s) => s.id !== songId);
+  setItem(FAVORITES_KEY, favorites);
+  return favorites;
+}
+
+export function isFavorite(songId: string): boolean {
+  return getFavorites().some((s) => s.id === songId);
+}
+
+export function getHistory(): Song[] {
+  return getItem<Song[]>(HISTORY_KEY, []);
+}
+
+export function addToHistory(song: Song): Song[] {
+  const history = getHistory().filter((s) => s.id !== song.id);
+  history.unshift(song);
+  if (history.length > MAX_HISTORY) history.pop();
+  setItem(HISTORY_KEY, history);
+  return history;
+}
+
+export function clearHistory(): void {
+  setItem(HISTORY_KEY, []);
+}
+
+export function getPreferredQuality(): string {
+  return getItem<string>(QUALITY_KEY, "320kbps");
+}
+
+export function setPreferredQuality(quality: string): void {
+  setItem(QUALITY_KEY, quality);
+}
