@@ -1,6 +1,6 @@
-# 🎵 Spotify Music Player
+# 🎵 AMAX Music Player
 
-A full-featured, Spotify-like music streaming web application built with Next.js. Search, play, download songs, and enjoy background playback with a premium dark UI.
+A full-featured music streaming web application built with Next.js. Search, play, and download songs with a premium dark UI and background playback.
 
 ---
 
@@ -13,7 +13,7 @@ A full-featured, Spotify-like music streaming web application built with Next.js
 - **📜 History** — Track your recently played songs
 - **🎵 Queue** — Manage your playback queue
 - **🔀 Shuffle & Repeat** — Full playback controls including shuffle and repeat modes
-- **🎨 Premium UI** — Dark theme with Spotify-like design, responsive across all devices
+- **🎨 Premium UI** — Dark theme with premium design, responsive across all devices
 - **📱 Mobile Optimized** — Full-screen mobile player with gesture support
 - **🎤 Lyrics** — View lyrics for supported songs
 - **📀 Browse** — Explore albums, artists, and curated playlists
@@ -28,7 +28,7 @@ A full-featured, Spotify-like music streaming web application built with Next.js
 - **React 18**
 - **TypeScript**
 - **Tailwind CSS**
-- **JioSaavn API** via [saavn.dev](https://saavn.dev)
+- **JioSaavn API** via [saavn.sumit.co](https://saavn.sumit.co)
 
 ---
 

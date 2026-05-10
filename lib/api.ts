@@ -1,7 +1,7 @@
 import type { Song, Album, Playlist, Artist, DownloadUrl } from "./types";
 import { decodeHtml, getBestImage } from "./utils";
 
-const SAAVN_API = "https://saavn.dev/api";
+const SAAVN_API = "https://saavn.sumit.co/api";
 
 function mapSong(raw: Record<string, unknown>): Song {
   const artists = raw.artists as Record<string, unknown> | undefined;
