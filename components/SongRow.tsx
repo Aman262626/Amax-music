@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { formatDuration, getBestDownloadUrl } from "@/lib/utils";
 import { isFavorite, addFavorite, removeFavorite } from "@/lib/storage";
@@ -118,7 +118,7 @@ export default function SongRow({
 
       {/* Image */}
       <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 shadow">
-        <Image
+        <SafeImage
           src={song.image}
           alt={song.name}
           fill

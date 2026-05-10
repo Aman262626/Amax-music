@@ -30,7 +30,7 @@ export function getBestImage(images: { quality: string; url: string }[]): string
   const preferred = ["500x500", "400x400", "150x150", "50x50"];
   for (const q of preferred) {
     const found = images.find((img) => img.quality === q);
-    if (found) return found.url;
+    if (found?.url) return found.url;
   }
   return images[images.length - 1]?.url || "/placeholder.svg";
 }

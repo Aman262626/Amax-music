@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Song } from "@/lib/types";
 import { IoPlay, IoChevronBack, IoChevronForward, IoVideocam } from "react-icons/io5";
@@ -90,7 +90,7 @@ export default function VideoPreviewScroll({ songs, title }: VideoPreviewScrollP
                   </div>
                 ) : (
                   <div className="relative aspect-video cursor-pointer group" onClick={() => loadVideo(song)}>
-                    <Image
+                    <SafeImage
                       src={song.image}
                       alt={song.name}
                       fill

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import SongRow from "@/components/SongRow";
 import AlbumCard from "@/components/AlbumCard";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -70,7 +70,7 @@ export default function ArtistPage({
       {/* Hero */}
       <div className="relative h-64 sm:h-80 gradient-mesh-alt">
         {artist.image && (
-          <Image
+          <SafeImage
             src={artist.image}
             alt={artist.name}
             fill

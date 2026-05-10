@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import Image from "next/image";
 import { usePlayer } from "@/contexts/PlayerContext";
+import SafeImage from "./SafeImage";
 import { formatDuration, getBestDownloadUrl } from "@/lib/utils";
 import { isFavorite, addFavorite, removeFavorite } from "@/lib/storage";
 import {
@@ -162,7 +162,7 @@ export default function Player() {
         {/* Left: Song info */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-lg">
-            <Image
+            <SafeImage
               src={currentSong.image}
               alt={currentSong.name}
               fill
@@ -384,7 +384,7 @@ export default function Player() {
           />
           <div className="flex items-center gap-3 p-2">
             <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-              <Image
+              <SafeImage
                 src={currentSong.image}
                 alt={currentSong.name}
                 fill
@@ -473,7 +473,7 @@ export default function Player() {
               {/* Album art with vinyl effect */}
               <div className="relative">
                 <div className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl ${isPlaying ? 'glow-green' : ''}`}>
-                  <Image
+                  <SafeImage
                     src={currentSong.imageHigh || currentSong.image}
                     alt={currentSong.name}
                     fill

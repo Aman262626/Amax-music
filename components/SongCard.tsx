@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Song } from "@/lib/types";
 import { IoPlay } from "react-icons/io5";
@@ -21,7 +21,7 @@ export default function SongCard({ song, songs }: SongCardProps) {
       className="group glass-card rounded-xl p-3 sm:p-4 text-left w-full"
     >
       <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg">
-        <Image
+        <SafeImage
           src={song.image}
           alt={song.name}
           fill

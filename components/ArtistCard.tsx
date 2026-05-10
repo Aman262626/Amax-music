@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import Link from "next/link";
 import type { Artist } from "@/lib/types";
 
@@ -11,7 +11,7 @@ export default function ArtistCard({ artist }: { artist: Artist }) {
       className="group glass-card rounded-xl p-3 sm:p-4 block text-center"
     >
       <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg mx-auto">
-        <Image
+        <SafeImage
           src={artist.image}
           alt={artist.name}
           fill

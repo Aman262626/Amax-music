@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
+import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import {
   IoClose,
@@ -344,7 +344,7 @@ export default function PartyMode() {
                     <div className="flex items-center gap-3">
                       {room.songImage && (
                         <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image
+                          <SafeImage
                             src={room.songImage}
                             alt={room.songName}
                             fill
