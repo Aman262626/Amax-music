@@ -8,6 +8,7 @@ import Player from "@/components/Player";
 import MobileNav from "@/components/MobileNav";
 import PartyJoinHandler from "@/components/PartyJoinHandler";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AppShell from "@/components/AppShell";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -55,6 +56,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-spotify-black`}>
         <ErrorBoundary>
+          <AppShell>
           <PlayerProvider>
             <div className="h-screen flex flex-col overflow-hidden">
               <Suspense fallback={null}>
@@ -70,6 +72,7 @@ export default function RootLayout({
               <MobileNav />
             </div>
           </PlayerProvider>
+          </AppShell>
         </ErrorBoundary>
       </body>
     </html>
