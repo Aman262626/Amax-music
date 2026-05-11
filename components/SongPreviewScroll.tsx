@@ -159,7 +159,7 @@ export default function SongPreviewScroll({ songs, title }: SongPreviewScrollPro
                       <circle
                         cx="32" cy="32" r="28"
                         fill="none"
-                        stroke="#1db954"
+                        stroke="#c026d3"
                         strokeWidth="3"
                         strokeDasharray={`${previewProgress * 1.76} 176`}
                         strokeLinecap="round"

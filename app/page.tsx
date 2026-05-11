@@ -17,7 +17,7 @@ const MOODS = [
   { label: "Sad", icon: IoSad, query: "sad emotional hindi songs", color: "from-blue-400 to-indigo-600" },
   { label: "Party", icon: IoFlame, query: "party dance hindi songs", color: "from-red-500 to-pink-500" },
   { label: "Chill", icon: IoMoon, query: "chill lofi hindi songs", color: "from-purple-400 to-indigo-500" },
-  { label: "Workout", icon: IoFitness, query: "workout gym motivation songs", color: "from-green-500 to-emerald-600" },
+  { label: "Workout", icon: IoFitness, query: "workout gym motivation songs", color: "from-fuchsia-500 to-purple-600" },
   { label: "Focus", icon: IoCafe, query: "instrumental focus study music", color: "from-amber-400 to-orange-500" },
 ];
 
@@ -26,7 +26,7 @@ const CATEGORIES = [
   { label: "Bollywood", query: "bollywood hits", gradient: "from-accent-orange to-accent-pink" },
   { label: "Pop", query: "pop hits 2024", gradient: "from-accent-blue to-accent-purple" },
   { label: "Hip Hop", query: "hip hop rap", gradient: "from-yellow-500 to-accent-orange" },
-  { label: "Punjabi", query: "punjabi hits", gradient: "from-spotify-green to-accent-cyan" },
+  { label: "Punjabi", query: "punjabi hits", gradient: "from-fuchsia-500 to-accent-cyan" },
   { label: "Romantic", query: "romantic love songs", gradient: "from-accent-red to-accent-pink" },
   { label: "Party", query: "party dance songs", gradient: "from-accent-purple to-accent-pink" },
   { label: "Chill", query: "lofi chill", gradient: "from-accent-cyan to-accent-blue" },
