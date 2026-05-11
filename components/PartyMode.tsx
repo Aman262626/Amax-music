@@ -14,6 +14,7 @@ import {
   IoPlay,
   IoPause,
   IoCheckmark,
+  IoSync,
 } from "react-icons/io5";
 
 interface PartyDevice {
@@ -31,8 +32,10 @@ interface PartyRoom {
   songImage: string | null;
   isPlaying: boolean;
   progress: number;
+  timestamp: number;
   devices: PartyDevice[];
   updatedAt: number;
+  songChangedAt: number;
 }
 
 function getDeviceId(): string {
@@ -70,7 +73,7 @@ function DeviceIcon({ name }: { name: string }) {
 }
 
 export default function PartyMode() {
-  const { currentSong, isPlaying, playSong, togglePlay, progress } = usePlayer();
+  const { currentSong, isPlaying, playSong, togglePlay, progress, seek, pause, resume } = usePlayer();
   const [isOpen, setIsOpen] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
@@ -78,9 +81,35 @@ export default function PartyMode() {
   const [isHost, setIsHost] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const failCountRef = useRef(0);
+  const lastSongIdRef = useRef<string | null>(null);
+  const lastSyncRef = useRef(0);
   const deviceId = typeof window !== "undefined" ? getDeviceId() : "unknown";
   const deviceName = typeof window !== "undefined" ? getDeviceName() : "Unknown";
+
+  // Persist room ID in localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("amax_party_room");
+    const savedHost = localStorage.getItem("amax_party_host");
+    if (saved) {
+      setRoomId(saved);
+      setIsHost(savedHost === "true");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (roomId) {
+      localStorage.setItem("amax_party_room", roomId);
+      localStorage.setItem("amax_party_host", String(isHost));
+    } else {
+      localStorage.removeItem("amax_party_room");
+      localStorage.removeItem("amax_party_host");
+    }
+  }, [roomId, isHost]);
 
   const createRoom = useCallback(async () => {
     setError("");
@@ -99,6 +128,7 @@ export default function PartyMode() {
           songImage: currentSong?.image || null,
           isPlaying,
           progress,
+          timestamp: Date.now(),
         }),
       });
       const data = await res.json();
@@ -106,31 +136,55 @@ export default function PartyMode() {
         setRoomId(data.roomId);
         setRoom(data.room);
         setIsHost(true);
+        failCountRef.current = 0;
+        lastSongIdRef.current = currentSong?.id || null;
       }
     } catch {
-      setError("Failed to create party");
+      setError("Failed to create party. Try again.");
     }
   }, [currentSong, isPlaying, progress, deviceId, deviceName]);
 
   const joinRoom = useCallback(async () => {
-    if (!joinCode.trim()) return;
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return;
     setError("");
     try {
       const res = await fetch(
-        `/api/party?room=${joinCode.trim().toUpperCase()}&deviceId=${deviceId}&deviceName=${encodeURIComponent(deviceName)}`
+        `/api/party?room=${code}&deviceId=${deviceId}&deviceName=${encodeURIComponent(deviceName)}`
       );
       if (!res.ok) {
-        setError("Room not found");
+        setError("Room not found. Check the code.");
         return;
       }
       const data = await res.json();
       setRoomId(data.id);
       setRoom(data);
       setIsHost(data.hostId === deviceId);
+      failCountRef.current = 0;
+
+      // Sync to host's song immediately
+      if (data.songId && data.songId !== currentSong?.id) {
+        try {
+          const songRes = await fetch(`/api/songs/${data.songId}`);
+          const song = await songRes.json();
+          if (song && !song.error) {
+            playSong(song);
+            lastSongIdRef.current = data.songId;
+            if (data.progress > 0) {
+              setTimeout(() => seek(data.progress), 500);
+            }
+            if (!data.isPlaying) {
+              setTimeout(() => pause(), 600);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
     } catch {
-      setError("Failed to join party");
+      setError("Failed to join party. Try again.");
     }
-  }, [joinCode, deviceId, deviceName]);
+  }, [joinCode, deviceId, deviceName, currentSong?.id, playSong, seek, pause]);
 
   const leaveRoom = useCallback(async () => {
     if (!roomId) return;
@@ -146,10 +200,16 @@ export default function PartyMode() {
     setRoomId(null);
     setRoom(null);
     setIsHost(false);
+    failCountRef.current = 0;
+    if (pollRef.current) clearInterval(pollRef.current);
   }, [roomId, deviceId]);
 
+  // Host syncs state to server
   const syncToRoom = useCallback(async () => {
     if (!roomId || !isHost) return;
+    const now = Date.now();
+    if (now - lastSyncRef.current < 1500) return;
+    lastSyncRef.current = now;
     try {
       await fetch("/api/party", {
         method: "POST",
@@ -164,26 +224,34 @@ export default function PartyMode() {
           songImage: currentSong?.image || null,
           isPlaying,
           progress,
+          timestamp: Date.now(),
         }),
       });
     } catch {
-      // ignore
+      // ignore sync failures
     }
   }, [roomId, isHost, currentSong, isPlaying, progress, deviceId]);
 
+  // Host auto-syncs on song/play state changes
   useEffect(() => {
     if (roomId && isHost) {
       syncToRoom();
     }
   }, [currentSong?.id, isPlaying, syncToRoom, roomId, isHost]);
 
+  // Host periodic sync for progress
+  useEffect(() => {
+    if (!roomId || !isHost) return;
+    const interval = setInterval(syncToRoom, 2000);
+    return () => clearInterval(interval);
+  }, [roomId, isHost, syncToRoom]);
+
+  // Polling for room state (guests AND host for device list)
   useEffect(() => {
     if (!roomId) {
       if (pollRef.current) clearInterval(pollRef.current);
       return;
     }
-
-    let justLoadedSong = false;
 
     const poll = async () => {
       try {
@@ -191,36 +259,68 @@ export default function PartyMode() {
           `/api/party?room=${roomId}&deviceId=${deviceId}&deviceName=${encodeURIComponent(deviceName)}`
         );
         if (!res.ok) {
-          setRoomId(null);
-          setRoom(null);
+          failCountRef.current++;
+          if (failCountRef.current >= 10) {
+            setError("Party room expired. Create a new one.");
+            setRoomId(null);
+            setRoom(null);
+            setIsHost(false);
+          }
           return;
         }
-        const data = await res.json();
+        failCountRef.current = 0;
+        const data: PartyRoom = await res.json();
         setRoom(data);
 
-        if (!isHost && data.songId && data.songId !== currentSong?.id) {
-          try {
-            const songRes = await fetch(`/api/songs/${data.songId}`);
-            const song = await songRes.json();
-            if (song && !song.error) {
-              playSong(song);
-              justLoadedSong = true;
+        // Guest: sync song from host
+        if (!isHost) {
+          // Song changed
+          if (data.songId && data.songId !== lastSongIdRef.current) {
+            setSyncing(true);
+            lastSongIdRef.current = data.songId;
+            try {
+              const songRes = await fetch(`/api/songs/${data.songId}`);
+              const song = await songRes.json();
+              if (song && !song.error) {
+                playSong(song);
+                if (data.progress > 2) {
+                  setTimeout(() => seek(data.progress), 500);
+                }
+                if (!data.isPlaying) {
+                  setTimeout(() => pause(), 600);
+                }
+              }
+            } catch {
+              // ignore
             }
-          } catch {
-            // ignore
+            setSyncing(false);
+            return;
+          }
+
+          // Sync play/pause state
+          if (data.isPlaying && !isPlaying) {
+            resume();
+          } else if (!data.isPlaying && isPlaying) {
+            pause();
+          }
+
+          // Sync progress if drift > 5 seconds
+          if (data.isPlaying && Math.abs(data.progress - progress) > 5) {
+            seek(data.progress);
           }
         }
-
-        if (!isHost && !justLoadedSong && data.isPlaying !== isPlaying) {
-          togglePlay();
-        }
-        justLoadedSong = false;
       } catch {
-        // ignore
+        failCountRef.current++;
+        if (failCountRef.current >= 10) {
+          setError("Connection lost. Create a new party.");
+          setRoomId(null);
+          setRoom(null);
+          setIsHost(false);
+        }
       }
     };
 
-    pollRef.current = setInterval(poll, 3000);
+    pollRef.current = setInterval(poll, 2000);
     poll();
 
     return () => {
@@ -274,6 +374,7 @@ export default function PartyMode() {
               <span className="text-white font-semibold text-sm">
                 {roomId ? "Party Active" : "Party Mode"}
               </span>
+              {syncing && <IoSync className="text-spotify-green animate-spin text-sm" />}
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -288,7 +389,7 @@ export default function PartyMode() {
               <>
                 {/* Create or Join */}
                 <p className="text-spotify-light-gray text-xs mb-4">
-                  Listen together with friends! Create a party or join with a code.
+                  Listen together! Create a party or join with a code. All devices play the same song in sync.
                 </p>
 
                 <button
@@ -337,6 +438,16 @@ export default function PartyMode() {
                     {roomId}
                   </p>
                 </div>
+
+                {/* Sync status */}
+                {!isHost && (
+                  <div className="glass rounded-xl p-2 mb-3 flex items-center gap-2">
+                    <IoSync className={`text-spotify-green text-sm ${syncing ? "animate-spin" : ""}`} />
+                    <span className="text-spotify-light-gray text-xs">
+                      {syncing ? "Syncing with host..." : "Synced with host"}
+                    </span>
+                  </div>
+                )}
 
                 {/* Now playing in party */}
                 {room?.songName && (
@@ -404,6 +515,10 @@ export default function PartyMode() {
                   </div>
                 </div>
 
+                {error && (
+                  <p className="text-accent-red text-xs mb-2">{error}</p>
+                )}
+
                 {/* Leave button */}
                 <button
                   onClick={leaveRoom}
@@ -414,7 +529,12 @@ export default function PartyMode() {
 
                 {isHost && (
                   <p className="text-spotify-light-gray text-[10px] text-center mt-2">
-                    You are the host. Other devices sync to your playback.
+                    You are the host. Song changes and playback sync to all devices.
+                  </p>
+                )}
+                {!isHost && (
+                  <p className="text-spotify-light-gray text-[10px] text-center mt-2">
+                    Following host&apos;s playback. Song &amp; progress auto-sync.
                   </p>
                 )}
               </>
