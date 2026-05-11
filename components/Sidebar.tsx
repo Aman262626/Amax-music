@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IoHome, IoSearch, IoLibrary, IoPersonCircle } from "react-icons/io5";
-import { BiMusic } from "react-icons/bi";
+import SafeImage from "./SafeImage";
 import { IoMdTrendingUp } from "react-icons/io";
 
 const NAV_ITEMS = [
@@ -21,9 +21,7 @@ export default function Sidebar() {
       {/* Logo & Nav */}
       <div className="glass rounded-xl p-4 pb-2">
         <Link href="/" className="flex items-center gap-2 mb-5 px-2 group">
-          <div className="w-8 h-8 bg-gradient-to-br from-spotify-green to-accent-cyan rounded-lg flex items-center justify-center shadow-lg group-hover:glow-green transition-all">
-            <BiMusic className="text-black text-lg" />
-          </div>
+          <SafeImage src="/icon-96x96.png" alt="AMAX" width={32} height={32} className="rounded-lg shadow-lg group-hover:glow-green transition-all" />
           <span className="text-white font-bold text-xl tracking-tight gradient-text">
             AMAX
           </span>

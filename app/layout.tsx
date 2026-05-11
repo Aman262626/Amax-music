@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   description:
     "AMAX Music - Free premium music streaming. Search, play, download songs. Background playback, lyrics, smart recommendations.",
   keywords: ["amax", "music", "player", "streaming", "download", "songs", "lyrics", "premium"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AMAX Music",
+  },
 };
 
 export const viewport: Viewport = {
@@ -34,11 +40,17 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
         />
       </head>
       <body className={`${inter.className} bg-spotify-black`}>
