@@ -10,8 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         spotify: {
-          green: "#1DB954",
-          "green-light": "#1ED760",
+          green: "#c026d3",
+          "green-light": "#d946ef",
           black: "#0a0a0a",
           "dark-gray": "#121212",
           gray: "#1a1a2e",

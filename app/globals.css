@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --amax-green: #1db954;
-  --amax-green-light: #1ed760;
+  --amax-green: #c026d3;
+  --amax-green-light: #d946ef;
   --amax-black: #0a0a0a;
   --amax-dark: #121212;
   --amax-gray: #1a1a2e;
@@ -97,7 +97,7 @@ body {
 
 /* Glow effects */
 .glow-green {
-  box-shadow: 0 0 20px rgba(29, 185, 84, 0.3), 0 0 60px rgba(29, 185, 84, 0.1);
+  box-shadow: 0 0 20px rgba(192, 38, 211, 0.3), 0 0 60px rgba(192, 38, 211, 0.1);
 }
 
 .glow-pink {
@@ -113,7 +113,7 @@ body {
   background:
     radial-gradient(at 20% 20%, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
     radial-gradient(at 80% 20%, rgba(192, 132, 252, 0.15) 0%, transparent 50%),
-    radial-gradient(at 40% 80%, rgba(29, 185, 84, 0.1) 0%, transparent 50%),
+    radial-gradient(at 40% 80%, rgba(192, 38, 211, 0.1) 0%, transparent 50%),
     radial-gradient(at 80% 80%, rgba(96, 165, 250, 0.1) 0%, transparent 50%);
 }
 
@@ -219,7 +219,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #1db954, #22d3ee, #c084fc);
+  background: linear-gradient(135deg, #c026d3, #7c3aed, #ec4899);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -287,7 +287,7 @@ body {
 
 /* Neon text */
 .neon-green {
-  text-shadow: 0 0 10px rgba(29, 185, 84, 0.5), 0 0 40px rgba(29, 185, 84, 0.2);
+  text-shadow: 0 0 10px rgba(192, 38, 211, 0.5), 0 0 40px rgba(192, 38, 211, 0.2);
 }
 
 /* Smooth transitions for all interactive elements */
@@ -347,7 +347,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Video player shadow */
 .video-shadow {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(29, 185, 84, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(192, 38, 211, 0.1);
 }
 
 /* Slow pulse for samples */
