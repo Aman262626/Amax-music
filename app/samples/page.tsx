@@ -13,6 +13,8 @@ import {
   IoShareSocial,
   IoPlaySkipForward,
   IoMusicalNotes,
+  IoVideocam,
+  IoMusicalNote,
 } from "react-icons/io5";
 import { isFavorite, addFavorite, removeFavorite } from "@/lib/storage";
 
@@ -33,6 +35,9 @@ export default function SamplesPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
+  const [mode, setMode] = useState<"audio" | "video">("audio");
+  const [videoId, setVideoId] = useState<string | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const isSwiping = useRef(false);
@@ -83,6 +88,32 @@ export default function SamplesPage() {
       setLiked(isFavorite(songs[currentIndex].id));
     }
   }, [currentIndex, songs]);
+
+  // Fetch video for current song when in video mode
+  const fetchVideo = useCallback(async (song: Song) => {
+    setVideoLoading(true);
+    setVideoId(null);
+    try {
+      const q = `${song.name} ${song.artist}`;
+      const res = await fetch(`/api/youtube?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (data.videoIds && data.videoIds.length > 0) {
+        setVideoId(data.videoIds[0]);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setVideoLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === "video" && songs[currentIndex]) {
+      fetchVideo(songs[currentIndex]);
+    } else {
+      setVideoId(null);
+    }
+  }, [mode, currentIndex, songs, fetchVideo]);
 
   const goToSong = useCallback(
     (index: number) => {
@@ -171,8 +202,8 @@ export default function SamplesPage() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Background image */}
-      {song && (
+      {/* Background */}
+      {song && mode === "audio" && (
         <div className="absolute inset-0">
           <SafeImage
             src={song.imageHigh || song.image}
@@ -185,17 +216,87 @@ export default function SamplesPage() {
         </div>
       )}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full">
+      {/* Video background for video mode */}
+      {mode === "video" && videoId && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&loop=1&mute=0&playsinline=1&rel=0&modestbranding=1`}
+            className="w-full h-full"
+            style={{ minHeight: "100vh" }}
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            title="Music Video"
+          />
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+        </div>
+      )}
+
+      {/* Video loading */}
+      {mode === "video" && videoLoading && (
+        <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-2 border-spotify-green border-t-transparent rounded-full animate-spin" />
+            <p className="text-white text-sm">Loading video...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Video not found */}
+      {mode === "video" && !videoLoading && !videoId && song && (
+        <div className="absolute inset-0">
+          <SafeImage
+            src={song.imageHigh || song.image}
+            alt={song.name}
+            fill
+            className="object-cover blur-sm scale-110 opacity-40"
+            unoptimized
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-white/50 text-sm">No video available for this song</p>
+          </div>
+        </div>
+      )}
+
+      {/* Content overlay */}
+      <div className="relative z-10 flex flex-col h-full pointer-events-none">
         {/* Top bar */}
-        <div className="flex items-center justify-center p-4 pt-6">
+        <div className="flex items-center justify-center p-4 pt-6 pointer-events-auto">
           <h1 className="text-white font-bold text-lg">Samples</h1>
         </div>
 
+        {/* Audio/Video toggle */}
+        <div className="flex justify-center mb-4 pointer-events-auto">
+          <div className="flex bg-white/10 rounded-full p-1 backdrop-blur-lg">
+            <button
+              onClick={() => setMode("audio")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                mode === "audio"
+                  ? "bg-spotify-green text-black"
+                  : "text-white/70 hover:text-white"
+              }`}
+            >
+              <IoMusicalNote className="text-sm" />
+              Audio
+            </button>
+            <button
+              onClick={() => setMode("video")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                mode === "video"
+                  ? "bg-spotify-green text-black"
+                  : "text-white/70 hover:text-white"
+              }`}
+            >
+              <IoVideocam className="text-sm" />
+              Video
+            </button>
+          </div>
+        </div>
+
         {/* Main song area */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
-          {/* Album art */}
-          {song && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pointer-events-auto">
+          {/* Album art (shown in audio mode or when no video) */}
+          {song && (mode === "audio" || !videoId) && (
             <div
               className={`relative w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden shadow-2xl mb-8 ${
                 isCurrentPlaying ? "animate-pulse-slow glow-green" : ""
@@ -227,14 +328,14 @@ export default function SamplesPage() {
 
           {/* Song info */}
           {song && (
-            <div className="text-center max-w-sm w-full">
-              <p className="text-white text-xl font-bold truncate mb-1">
+            <div className={`text-center max-w-sm w-full ${mode === "video" && videoId ? "mt-auto" : ""}`}>
+              <p className="text-white text-xl font-bold truncate mb-1 drop-shadow-lg">
                 {song.name}
               </p>
-              <p className="text-spotify-light-gray text-sm truncate mb-1">
+              <p className="text-white/70 text-sm truncate mb-1 drop-shadow-lg">
                 {song.artist}
               </p>
-              <p className="text-spotify-light-gray/60 text-xs">
+              <p className="text-white/40 text-xs drop-shadow-lg">
                 {song.album} • {formatDuration(song.duration)}
               </p>
             </div>
@@ -242,33 +343,33 @@ export default function SamplesPage() {
         </div>
 
         {/* Side actions */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 pointer-events-auto">
           <button onClick={handleLike} className="flex flex-col items-center gap-1">
             {liked ? (
-              <IoHeart className="text-accent-pink text-3xl" />
+              <IoHeart className="text-accent-pink text-3xl drop-shadow-lg" />
             ) : (
-              <IoHeartOutline className="text-white text-3xl" />
+              <IoHeartOutline className="text-white text-3xl drop-shadow-lg" />
             )}
-            <span className="text-white text-[10px]">Like</span>
+            <span className="text-white text-[10px] drop-shadow-lg">Like</span>
           </button>
           <button
             onClick={handleShare}
             className="flex flex-col items-center gap-1"
           >
-            <IoShareSocial className="text-white text-3xl" />
-            <span className="text-white text-[10px]">Share</span>
+            <IoShareSocial className="text-white text-3xl drop-shadow-lg" />
+            <span className="text-white text-[10px] drop-shadow-lg">Share</span>
           </button>
           <button
             onClick={() => goToSong(currentIndex + 1)}
             className="flex flex-col items-center gap-1"
           >
-            <IoPlaySkipForward className="text-white text-3xl" />
-            <span className="text-white text-[10px]">Next</span>
+            <IoPlaySkipForward className="text-white text-3xl drop-shadow-lg" />
+            <span className="text-white text-[10px] drop-shadow-lg">Next</span>
           </button>
         </div>
 
         {/* Bottom indicator */}
-        <div className="px-6 pb-20 flex items-center justify-center gap-1">
+        <div className="px-6 pb-20 flex items-center justify-center gap-1 pointer-events-auto">
           {songs.slice(Math.max(0, currentIndex - 2), currentIndex + 3).map((s, i) => {
             const actualIndex = Math.max(0, currentIndex - 2) + i;
             return (
@@ -285,7 +386,7 @@ export default function SamplesPage() {
         </div>
 
         {/* Swipe hint */}
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 text-white/30 text-xs animate-bounce">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 text-white/30 text-xs animate-bounce pointer-events-none">
           ↑ Swipe up for next
         </div>
       </div>

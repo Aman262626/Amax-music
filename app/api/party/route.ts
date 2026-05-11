@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 interface PartyRoom {
   id: string;
   hostId: string;
@@ -9,9 +11,11 @@ interface PartyRoom {
   songImage: string | null;
   isPlaying: boolean;
   progress: number;
+  timestamp: number;
   devices: { id: string; name: string; lastSeen: number }[];
   updatedAt: number;
   createdAt: number;
+  songChangedAt: number;
 }
 
 const rooms = new Map<string, PartyRoom>();
@@ -19,12 +23,12 @@ const rooms = new Map<string, PartyRoom>();
 function cleanOldRooms() {
   const now = Date.now();
   const ids = Array.from(rooms.keys());
-  ids.forEach((id) => {
+  for (const id of ids) {
     const room = rooms.get(id);
-    if (room && now - room.updatedAt > 30 * 60 * 1000) {
+    if (room && now - room.updatedAt > 60 * 60 * 1000) {
       rooms.delete(id);
     }
-  });
+  }
 }
 
 function generateRoomId(): string {
@@ -34,6 +38,12 @@ function generateRoomId(): string {
     id += chars[Math.floor(Math.random() * chars.length)];
   }
   return id;
+}
+
+function cleanDevices(room: PartyRoom) {
+  room.devices = room.devices.filter(
+    (d) => Date.now() - d.lastSeen < 120000
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -46,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 
   cleanOldRooms();
-  const room = rooms.get(roomId);
+  const room = rooms.get(roomId.toUpperCase());
   if (!room) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
@@ -63,10 +73,10 @@ export async function GET(request: NextRequest) {
         lastSeen: Date.now(),
       });
     }
-    room.devices = room.devices.filter(
-      (d) => Date.now() - d.lastSeen < 60000
-    );
+    cleanDevices(room);
   }
+
+  room.updatedAt = Date.now();
 
   return NextResponse.json({
     id: room.id,
@@ -77,8 +87,10 @@ export async function GET(request: NextRequest) {
     songImage: room.songImage,
     isPlaying: room.isPlaying,
     progress: room.progress,
+    timestamp: room.timestamp,
     devices: room.devices,
     updatedAt: room.updatedAt,
+    songChangedAt: room.songChangedAt,
   });
 }
 
@@ -86,7 +98,20 @@ export async function POST(request: NextRequest) {
   cleanOldRooms();
 
   const body = await request.json();
-  const { action, roomId, hostId, deviceId, deviceName, songId, songName, songArtist, songImage, isPlaying, progress } = body;
+  const {
+    action,
+    roomId,
+    hostId,
+    deviceId,
+    deviceName,
+    songId,
+    songName,
+    songArtist,
+    songImage,
+    isPlaying,
+    progress,
+    timestamp,
+  } = body;
 
   if (action === "create") {
     const id = generateRoomId();
@@ -100,6 +125,7 @@ export async function POST(request: NextRequest) {
       songImage: songImage || null,
       isPlaying: isPlaying || false,
       progress: progress || 0,
+      timestamp: timestamp || now,
       devices: [
         {
           id: deviceId || "host",
@@ -109,16 +135,19 @@ export async function POST(request: NextRequest) {
       ],
       updatedAt: now,
       createdAt: now,
+      songChangedAt: now,
     };
     rooms.set(id, room);
     return NextResponse.json({ roomId: id, room });
   }
 
   if (action === "update" && roomId) {
-    const room = rooms.get(roomId);
+    const room = rooms.get(roomId.toUpperCase());
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
+
+    const songChanged = songId !== undefined && songId !== room.songId;
 
     if (songId !== undefined) room.songId = songId;
     if (songName !== undefined) room.songName = songName;
@@ -126,6 +155,8 @@ export async function POST(request: NextRequest) {
     if (songImage !== undefined) room.songImage = songImage;
     if (isPlaying !== undefined) room.isPlaying = isPlaying;
     if (progress !== undefined) room.progress = progress;
+    if (timestamp !== undefined) room.timestamp = timestamp;
+    if (songChanged) room.songChangedAt = Date.now();
     room.updatedAt = Date.now();
 
     if (deviceId) {
@@ -140,19 +171,17 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-    room.devices = room.devices.filter(
-      (d) => Date.now() - d.lastSeen < 60000
-    );
+    cleanDevices(room);
 
     return NextResponse.json({ room });
   }
 
   if (action === "leave" && roomId && deviceId) {
-    const room = rooms.get(roomId);
+    const room = rooms.get(roomId.toUpperCase());
     if (room) {
       room.devices = room.devices.filter((d) => d.id !== deviceId);
       if (room.devices.length === 0) {
-        rooms.delete(roomId);
+        rooms.delete(roomId.toUpperCase());
       }
     }
     return NextResponse.json({ ok: true });

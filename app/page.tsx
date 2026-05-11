@@ -7,8 +7,19 @@ import PlaylistCard from "@/components/PlaylistCard";
 import SongRow from "@/components/SongRow";
 import SongPreviewScroll from "@/components/SongPreviewScroll";
 import VideoPreviewScroll from "@/components/VideoPreviewScroll";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { getHistory, getFavorites } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
+import { IoMusicalNotes, IoHappy, IoSad, IoFlame, IoMoon, IoCafe, IoFitness } from "react-icons/io5";
+
+const MOODS = [
+  { label: "Happy", icon: IoHappy, query: "happy upbeat bollywood songs", color: "from-yellow-400 to-orange-500" },
+  { label: "Sad", icon: IoSad, query: "sad emotional hindi songs", color: "from-blue-400 to-indigo-600" },
+  { label: "Party", icon: IoFlame, query: "party dance hindi songs", color: "from-red-500 to-pink-500" },
+  { label: "Chill", icon: IoMoon, query: "chill lofi hindi songs", color: "from-purple-400 to-indigo-500" },
+  { label: "Workout", icon: IoFitness, query: "workout gym motivation songs", color: "from-green-500 to-emerald-600" },
+  { label: "Focus", icon: IoCafe, query: "instrumental focus study music", color: "from-amber-400 to-orange-500" },
+];
 
 const CATEGORIES = [
   { label: "Trending", query: "trending hits", gradient: "from-accent-pink to-accent-red" },
@@ -35,6 +46,7 @@ function getGreeting(): string {
 }
 
 export default function HomePage() {
+  const { playSong, playQueue } = usePlayer();
   const [greeting] = useState(getGreeting);
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -47,7 +59,23 @@ export default function HomePage() {
   const [recommendedSongs, setRecommendedSongs] = useState<Song[]>([]);
   const [artistMix, setArtistMix] = useState<{ artist: string; songs: Song[] }>({ artist: "", songs: [] });
   const [discoverSongs, setDiscoverSongs] = useState<Song[]>([]);
+  const [activeMood, setActiveMood] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const playMood = useCallback(async (label: string, query: string) => {
+    setActiveMood(label);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=songs`);
+      const data = await res.json();
+      const moodSongs = (data.songs as Song[]) || [];
+      if (moodSongs.length > 0) {
+        const shuffled = moodSongs.sort(() => Math.random() - 0.5);
+        playQueue(shuffled, 0);
+      }
+    } catch {
+      // ignore
+    }
+  }, [playQueue]);
 
   const fetchTrending = useCallback(async () => {
     try {
@@ -179,6 +207,33 @@ export default function HomePage() {
         </h1>
         <p className="text-spotify-light-gray text-sm">Discover music that moves you</p>
       </div>
+
+      {/* Mood Radio */}
+      <section className="mb-8">
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2">
+          <IoMusicalNotes className="text-spotify-green" />
+          Mood Radio
+        </h2>
+        <p className="text-spotify-light-gray text-xs mb-3">Tap a mood to start playing</p>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {MOODS.map((mood) => (
+            <button
+              key={mood.label}
+              onClick={() => playMood(mood.label, mood.query)}
+              className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all hover:scale-105 ${
+                activeMood === mood.label
+                  ? `bg-gradient-to-br ${mood.color} shadow-lg`
+                  : "glass hover:bg-white/10"
+              }`}
+            >
+              <mood.icon className={`text-2xl ${activeMood === mood.label ? "text-white" : "text-white/70"}`} />
+              <span className={`text-xs font-medium ${activeMood === mood.label ? "text-white" : "text-white/70"}`}>
+                {mood.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Recently Played */}
       {recentlyPlayed.length > 0 && (
