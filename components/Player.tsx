@@ -31,6 +31,7 @@ import LyricsPanel from "./LyricsPanel";
 import AudioVisualizer from "./AudioVisualizer";
 import VideoPlayer from "./VideoPlayer";
 import PartyMode from "./PartyMode";
+import AudioModeSelector from "./AudioModeSelector";
 
 export default function Player() {
   const {
@@ -330,6 +331,7 @@ export default function Player() {
               </div>
             )}
           </div>
+          <AudioModeSelector />
           <VideoPlayer />
           <PartyMode />
           <button
@@ -628,6 +630,10 @@ export default function Player() {
                     <IoTimer className="text-xl" />
                     <span className="text-[10px]">{sleepTimer > 0 ? `${sleepTimer}m` : 'Timer'}</span>
                   </button>
+                  <div className="flex flex-col items-center gap-1">
+                    <AudioModeSelector />
+                    <span className="text-spotify-light-gray text-[10px]">Mode</span>
+                  </div>
                   <div className="flex flex-col items-center gap-1">
                     <VideoPlayer />
                     <span className="text-spotify-light-gray text-[10px]">Video</span>
