@@ -1,7 +1,31 @@
 import type { Song, Album, Playlist, Artist, DownloadUrl } from "./types";
 import { decodeHtml, getBestImage } from "./utils";
 
-const SAAVN_API = "https://saavn.sumit.co/api";
+const SAAVN_API_URLS = [
+  "https://jiosaavn-apix.arcadopredator.workers.dev/api",
+  "https://saavn.sumit.co/api",
+];
+
+let activeSaavnApi = SAAVN_API_URLS[0];
+
+async function saavnFetch(path: string, init?: RequestInit): Promise<Response> {
+  for (let i = 0; i < SAAVN_API_URLS.length; i++) {
+    const url = `${activeSaavnApi}${path}`;
+    try {
+      const res = await fetch(url, init);
+      if (res.ok) return res;
+      const text = await res.text();
+      if (text.includes("error code") || text.includes("1027")) {
+        activeSaavnApi = SAAVN_API_URLS[(SAAVN_API_URLS.indexOf(activeSaavnApi) + 1) % SAAVN_API_URLS.length];
+        continue;
+      }
+      return new Response(text, { status: res.status, headers: res.headers });
+    } catch {
+      activeSaavnApi = SAAVN_API_URLS[(SAAVN_API_URLS.indexOf(activeSaavnApi) + 1) % SAAVN_API_URLS.length];
+    }
+  }
+  return new Response("{}", { status: 500 });
+}
 
 function mapSong(raw: Record<string, unknown>): Song {
   const artists = raw.artists as Record<string, unknown> | undefined;
@@ -85,9 +109,9 @@ function mapArtist(raw: Record<string, unknown>): Artist {
 }
 
 export async function searchSongs(query: string, page = 1, limit = 20): Promise<Song[]> {
-  const res = await fetch(
-    `${SAAVN_API}/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
-    { next: { revalidate: 300 } }
+  const res = await saavnFetch(
+    `/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+    { next: { revalidate: 300 } } as RequestInit
   );
   if (!res.ok) return [];
   const data = await res.json();
@@ -95,9 +119,9 @@ export async function searchSongs(query: string, page = 1, limit = 20): Promise<
 }
 
 export async function searchAlbums(query: string, page = 1, limit = 10): Promise<Album[]> {
-  const res = await fetch(
-    `${SAAVN_API}/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
-    { next: { revalidate: 300 } }
+  const res = await saavnFetch(
+    `/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+    { next: { revalidate: 300 } } as RequestInit
   );
   if (!res.ok) return [];
   const data = await res.json();
@@ -105,9 +129,9 @@ export async function searchAlbums(query: string, page = 1, limit = 10): Promise
 }
 
 export async function searchArtists(query: string, page = 1, limit = 10): Promise<Artist[]> {
-  const res = await fetch(
-    `${SAAVN_API}/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
-    { next: { revalidate: 300 } }
+  const res = await saavnFetch(
+    `/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+    { next: { revalidate: 300 } } as RequestInit
   );
   if (!res.ok) return [];
   const data = await res.json();
@@ -115,9 +139,9 @@ export async function searchArtists(query: string, page = 1, limit = 10): Promis
 }
 
 export async function searchPlaylists(query: string, page = 1, limit = 10): Promise<Playlist[]> {
-  const res = await fetch(
-    `${SAAVN_API}/search/playlists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
-    { next: { revalidate: 300 } }
+  const res = await saavnFetch(
+    `/search/playlists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+    { next: { revalidate: 300 } } as RequestInit
   );
   if (!res.ok) return [];
   const data = await res.json();
@@ -135,7 +159,7 @@ export async function searchAll(query: string) {
 }
 
 export async function getSongById(id: string): Promise<Song | null> {
-  const res = await fetch(`${SAAVN_API}/songs/${id}`, { next: { revalidate: 3600 } });
+  const res = await saavnFetch(`/songs/${id}`, { next: { revalidate: 3600 } } as RequestInit);
   if (!res.ok) return null;
   const data = await res.json();
   const songs = (data.data as Record<string, unknown>[]) || [];
@@ -143,37 +167,37 @@ export async function getSongById(id: string): Promise<Song | null> {
 }
 
 export async function getSongLyrics(id: string): Promise<string | null> {
-  const res = await fetch(`${SAAVN_API}/songs/${id}/lyrics`, { next: { revalidate: 86400 } });
+  const res = await saavnFetch(`/songs/${id}/lyrics`, { next: { revalidate: 86400 } } as RequestInit);
   if (!res.ok) return null;
   const data = await res.json();
   return (data.data?.lyrics as string) || null;
 }
 
 export async function getSongSuggestions(id: string, limit = 10): Promise<Song[]> {
-  const res = await fetch(`${SAAVN_API}/songs/${id}/suggestions?limit=${limit}`, {
+  const res = await saavnFetch(`/songs/${id}/suggestions?limit=${limit}`, {
     next: { revalidate: 3600 },
-  });
+  } as RequestInit);
   if (!res.ok) return [];
   const data = await res.json();
   return ((data.data as Record<string, unknown>[]) || []).map(mapSong);
 }
 
 export async function getAlbumById(id: string): Promise<Album | null> {
-  const res = await fetch(`${SAAVN_API}/albums?id=${id}`, { next: { revalidate: 3600 } });
+  const res = await saavnFetch(`/albums?id=${id}`, { next: { revalidate: 3600 } } as RequestInit);
   if (!res.ok) return null;
   const data = await res.json();
   return data.data ? mapAlbum(data.data as Record<string, unknown>) : null;
 }
 
 export async function getPlaylistById(id: string): Promise<Playlist | null> {
-  const res = await fetch(`${SAAVN_API}/playlists?id=${id}`, { next: { revalidate: 1800 } });
+  const res = await saavnFetch(`/playlists?id=${id}`, { next: { revalidate: 1800 } } as RequestInit);
   if (!res.ok) return null;
   const data = await res.json();
   return data.data ? mapPlaylist(data.data as Record<string, unknown>) : null;
 }
 
 export async function getArtistById(id: string): Promise<Artist | null> {
-  const res = await fetch(`${SAAVN_API}/artists/${id}`, { next: { revalidate: 3600 } });
+  const res = await saavnFetch(`/artists/${id}`, { next: { revalidate: 3600 } } as RequestInit);
   if (!res.ok) return null;
   const data = await res.json();
   return data.data ? mapArtist(data.data as Record<string, unknown>) : null;
