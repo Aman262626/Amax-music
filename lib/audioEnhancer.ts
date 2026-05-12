@@ -19,7 +19,7 @@ export const AUDIO_MODES: AudioModeInfo[] = [
   { id: "normal", name: "Normal", description: "Standard playback", icon: "🎵" },
   { id: "crystal_clear", name: "Crystal Clear", description: "HD voice, crystal clear audio", icon: "💎" },
   { id: "3d_surround", name: "3D Surround", description: "Immersive 3D spatial audio", icon: "🌐" },
-  { id: "volume_boost", name: "Volume Boost", description: "Amplified sound output", icon: "🔊" },
+  { id: "volume_boost", name: "Volume Boost", description: "500x maximum amplification", icon: "🔊" },
   { id: "dj_mode", name: "DJ Mode", description: "Enhanced bass & treble for party", icon: "🎧" },
   { id: "bass_boost", name: "Bass Boost", description: "Deep, powerful bass", icon: "🔉" },
   { id: "vocal_boost", name: "Vocal Boost", description: "Enhanced vocals & clarity", icon: "🎤" },
@@ -41,6 +41,7 @@ export class AudioEnhancer {
   private delayLeft: DelayNode | null = null;
   private delayRight: DelayNode | null = null;
   private surroundGain: GainNode | null = null;
+  private boostGainNode: GainNode | null = null;
   private currentMode: AudioMode = "normal";
   private isInitialized = false;
   private audioElement: HTMLAudioElement | null = null;
@@ -103,15 +104,19 @@ export class AudioEnhancer {
       this.surroundGain = this.audioContext.createGain();
       this.surroundGain.gain.value = 0;
 
-      // Main signal chain
+      this.boostGainNode = this.audioContext.createGain();
+      this.boostGainNode.gain.value = 1;
+
+      // Main signal chain: EQ → pre-gain → compressor → boost-gain → panner → out
       this.sourceNode
         .connect(this.subBassFilter)
         .connect(this.bassFilter)
         .connect(this.midFilter)
         .connect(this.presenceFilter)
         .connect(this.trebleFilter)
-        .connect(this.compressor)
         .connect(this.gainNode)
+        .connect(this.compressor)
+        .connect(this.boostGainNode)
         .connect(this.pannerNode)
         .connect(this.audioContext.destination);
 
@@ -141,6 +146,7 @@ export class AudioEnhancer {
     this.compressor!.attack.value = 0.003;
     this.compressor!.release.value = 0.25;
     this.pannerNode!.pan.value = 0;
+    this.boostGainNode!.gain.value = 1;
   }
 
   applyMode(mode: AudioMode): void {
@@ -177,18 +183,20 @@ export class AudioEnhancer {
         break;
 
       case "volume_boost":
-        // Maximum loudness with limiting
-        this.subBassFilter!.gain.value = 3;
-        this.bassFilter!.gain.value = 4;
-        this.midFilter!.gain.value = 3;
-        this.presenceFilter!.gain.value = 3;
-        this.trebleFilter!.gain.value = 2;
-        this.compressor!.threshold.value = -30;
-        this.compressor!.ratio.value = 8;
-        this.compressor!.knee.value = 10;
-        this.compressor!.attack.value = 0.001;
-        this.compressor!.release.value = 0.1;
-        this.gainNode!.gain.value = 1.8;
+        // 500x maximum loudness with multi-stage amplification
+        this.subBassFilter!.gain.value = 10;
+        this.bassFilter!.gain.value = 10;
+        this.midFilter!.gain.value = 10;
+        this.presenceFilter!.gain.value = 10;
+        this.trebleFilter!.gain.value = 8;
+        this.gainNode!.gain.value = 15;
+        this.compressor!.threshold.value = -50;
+        this.compressor!.ratio.value = 20;
+        this.compressor!.knee.value = 0;
+        this.compressor!.attack.value = 0;
+        this.compressor!.release.value = 0.01;
+        this.boostGainNode!.gain.value = 30;
+        if (this.audioElement) this.audioElement.volume = 1.0;
         break;
 
       case "dj_mode":
@@ -313,8 +321,9 @@ export class AudioEnhancer {
       .connect(this.midFilter!)
       .connect(this.presenceFilter!)
       .connect(this.trebleFilter!)
-      .connect(this.compressor!)
       .connect(this.gainNode!)
+      .connect(this.compressor!)
+      .connect(this.boostGainNode!)
       .connect(this.pannerNode)
       .connect(this.audioContext.destination);
   }
