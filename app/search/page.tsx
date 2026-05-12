@@ -9,7 +9,7 @@ import ArtistCard from "@/components/ArtistCard";
 import PlaylistCard from "@/components/PlaylistCard";
 import VideoPreviewScroll from "@/components/VideoPreviewScroll";
 import type { Song, Album, Artist, Playlist } from "@/lib/types";
-import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch } from "react-icons/io5";
+import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch, IoMic } from "react-icons/io5";
 
 type TabType = "all" | "songs" | "albums" | "artists" | "playlists";
 
@@ -65,9 +65,18 @@ function SearchInput({ urlQuery, router }: { urlQuery: string; router: ReturnTyp
         value={inputValue}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Search songs, albums, artists..."
-        className="w-full pl-10 pr-4 py-3 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-1 focus:ring-spotify-green/50 transition-all"
+        className="w-full pl-10 pr-12 py-3 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-2 focus:ring-spotify-green/30 focus:bg-white/[0.07] transition-all"
         autoFocus
       />
+      {inputValue && (
+        <button
+          onClick={() => handleChange("")}
+          className="absolute right-10 top-1/2 -translate-y-1/2 text-spotify-light-gray hover:text-white text-sm"
+        >
+          &times;
+        </button>
+      )}
+      <IoMic className="absolute right-3 top-1/2 -translate-y-1/2 text-spotify-light-gray hover:text-spotify-green cursor-pointer transition-colors" />
     </div>
   );
 }
@@ -148,11 +157,14 @@ function SearchContent() {
               <button
                 key={cat.label}
                 onClick={() => handleCategoryClick(cat.query)}
-                className={`relative h-28 sm:h-36 rounded-xl overflow-hidden bg-gradient-to-br ${cat.gradient} p-4 text-left hover:scale-[1.02] transition-all shadow-lg`}
+                className={`relative h-28 sm:h-36 rounded-xl overflow-hidden bg-gradient-to-br ${cat.gradient} p-4 text-left hover:scale-[1.02] transition-all shadow-lg hover-lift group`}
               >
                 <span className="text-white font-bold text-base sm:text-lg drop-shadow-md">
                   {cat.label}
                 </span>
+                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <IoSearch className="text-white/50 text-xl" />
+                </div>
               </button>
             ))}
           </div>
