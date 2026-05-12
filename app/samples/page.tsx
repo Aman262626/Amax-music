@@ -120,9 +120,11 @@ export default function SamplesPage() {
     (index: number) => {
       if (index < 0 || index >= songs.length) return;
       setCurrentIndex(index);
-      playSong(songs[index], songs, index);
+      if (mode === "audio") {
+        playSong(songs[index], songs, index);
+      }
     },
-    [songs, playSong]
+    [songs, playSong, mode]
   );
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
