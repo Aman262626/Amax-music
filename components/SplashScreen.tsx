@@ -83,71 +83,49 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       <div className="relative z-10 flex flex-col items-center gap-6 px-8">
         {phase === "logo" && (
           <div className="flex flex-col items-center gap-8 splash-enter">
-            {/* 3D Holographic Logo */}
+            {/* 3D Holographic Text Logo */}
             <div className="relative splash-logo-3d">
               {/* Outer holographic rings */}
-              <div className="absolute -inset-8 splash-ring-1">
+              <div className="absolute -inset-16 splash-ring-1">
                 <div className="w-full h-full rounded-full border border-purple-500/20" />
               </div>
-              <div className="absolute -inset-12 splash-ring-2">
+              <div className="absolute -inset-24 splash-ring-2">
                 <div className="w-full h-full rounded-full border border-cyan-400/15" />
               </div>
-              <div className="absolute -inset-16 splash-ring-3">
+              <div className="absolute -inset-32 splash-ring-3">
                 <div className="w-full h-full rounded-full border border-pink-400/10" />
               </div>
 
               {/* Glow layers */}
               <div
-                className="absolute -inset-4 rounded-3xl splash-glow"
+                className="absolute -inset-8 rounded-3xl splash-glow"
                 style={{
                   background: "conic-gradient(from 0deg, #c026d3, #22d3ee, #7c3aed, #ff6b9d, #c026d3)",
                   opacity: 0.3,
-                  filter: "blur(20px)",
+                  filter: "blur(25px)",
                 }}
               />
               <div
-                className="absolute -inset-2 rounded-3xl splash-glow-pulse"
+                className="absolute -inset-4 rounded-3xl splash-glow-pulse"
                 style={{
                   background: "radial-gradient(circle, rgba(192,38,211,0.4), transparent 70%)",
                 }}
               />
 
-              {/* Logo image with 3D effect */}
-              <div className="relative w-44 h-44 sm:w-52 sm:h-52 splash-logo-float">
-                <SafeImage
-                  src="/icon-512x512.png"
-                  alt="AMAX Music"
-                  width={208}
-                  height={208}
-                  className="rounded-3xl"
-                  style={{
-                    boxShadow: "0 0 40px rgba(192,38,211,0.5), 0 0 80px rgba(34,211,238,0.3), 0 0 120px rgba(124,58,237,0.2), 0 20px 60px rgba(0,0,0,0.6)",
-                  }}
-                  unoptimized
-                />
-                {/* Holographic shimmer on logo */}
-                <div className="absolute inset-0 rounded-3xl overflow-hidden">
-                  <div className="absolute inset-0 splash-shimmer" style={{
-                    background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.15) 38%, rgba(255,255,255,0.25) 42%, rgba(255,255,255,0.15) 46%, transparent 54%)",
-                    backgroundSize: "200% 100%",
+              {/* App name with holographic text */}
+              <div className="relative text-center splash-logo-float">
+                <h1 className="text-7xl sm:text-8xl font-black tracking-wider gradient-text-holo splash-text-glow">
+                  AMAX
+                </h1>
+                <p className="text-white/40 text-sm tracking-[0.4em] mt-2 uppercase">
+                  Music Player
+                </p>
+                {/* Animated line under text */}
+                <div className="mt-3 mx-auto splash-line-expand">
+                  <div className="h-[2px] rounded-full" style={{
+                    background: "linear-gradient(90deg, transparent, #c026d3, #22d3ee, #c026d3, transparent)",
                   }} />
                 </div>
-              </div>
-            </div>
-
-            {/* App name with holographic text */}
-            <div className="text-center splash-text-enter">
-              <h1 className="text-5xl sm:text-6xl font-black tracking-wider gradient-text-holo splash-text-glow">
-                AMAX
-              </h1>
-              <p className="text-white/40 text-sm tracking-[0.4em] mt-2 uppercase">
-                Music Player
-              </p>
-              {/* Animated line under text */}
-              <div className="mt-3 mx-auto splash-line-expand">
-                <div className="h-[2px] rounded-full" style={{
-                  background: "linear-gradient(90deg, transparent, #c026d3, #22d3ee, #c026d3, transparent)",
-                }} />
               </div>
             </div>
           </div>
@@ -256,17 +234,9 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               </div>
             </div>
 
-            {/* Small logo at bottom */}
+            {/* Version text at bottom */}
             <div className="flex items-center gap-2 mt-2">
-              <SafeImage
-                src="/icon-96x96.png"
-                alt="AMAX"
-                width={20}
-                height={20}
-                className="rounded-md"
-                unoptimized
-              />
-              <span className="text-white/30 text-[10px] tracking-[0.2em]">AMAX MUSIC v1.0</span>
+              <span className="text-white/20 text-[10px] tracking-[0.2em]">AMAX MUSIC v1.0</span>
             </div>
           </div>
         )}
