@@ -30,9 +30,8 @@ const SAMPLE_QUERIES = [
 ];
 
 export default function SamplesPage() {
-  const { playSong, currentSong, isPlaying, togglePlay, pause } = usePlayer();
+  const { playSong, currentSong, isPlaying, togglePlay, pause, next, queue, queueIndex } = usePlayer();
   const [songs, setSongs] = useState<Song[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [mode, setMode] = useState<"audio" | "video">("audio");
@@ -41,6 +40,7 @@ export default function SamplesPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const isSwiping = useRef(false);
+  const songsRef = useRef<Song[]>([]);
 
   const fetchSongs = useCallback(async () => {
     const queries = SAMPLE_QUERIES.sort(() => Math.random() - 0.5).slice(0, 3);
@@ -65,6 +65,7 @@ export default function SamplesPage() {
       }
       const shuffled = all.sort(() => Math.random() - 0.5);
       setSongs(shuffled);
+      songsRef.current = shuffled;
       if (shuffled.length > 0) {
         playSong(shuffled[0], shuffled, 0);
       }
@@ -83,27 +84,26 @@ export default function SamplesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (songs[currentIndex]) {
-      setLiked(isFavorite(songs[currentIndex].id));
-    }
-  }, [currentIndex, songs]);
+  // Derive the displayed song from currentSong (single source of truth)
+  // Fall back to first song in the list if currentSong is not in the songs list
+  const song = currentSong && songs.some((s) => s.id === currentSong.id)
+    ? currentSong
+    : songs[0] || null;
+
+  const songIndex = song ? songs.findIndex((s) => s.id === song.id) : 0;
 
   useEffect(() => {
-    if (currentSong && songs.length > 0) {
-      const idx = songs.findIndex((s) => s.id === currentSong.id);
-      if (idx >= 0 && idx !== currentIndex) {
-        setCurrentIndex(idx);
-      }
+    if (song) {
+      setLiked(isFavorite(song.id));
     }
-  }, [currentSong, songs, currentIndex]);
+  }, [song]);
 
   // Fetch video for current song when in video mode
-  const fetchVideo = useCallback(async (song: Song) => {
+  const fetchVideo = useCallback(async (s: Song) => {
     setVideoLoading(true);
     setVideoId(null);
     try {
-      const q = `${song.name} ${song.artist}`;
+      const q = `${s.name} ${s.artist}`;
       const res = await fetch(`/api/youtube?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       if (data.videoIds && data.videoIds.length > 0) {
@@ -117,19 +117,19 @@ export default function SamplesPage() {
   }, []);
 
   useEffect(() => {
-    if (mode === "video" && songs[currentIndex]) {
+    if (mode === "video" && song) {
       pause();
-      fetchVideo(songs[currentIndex]);
+      fetchVideo(song);
     } else {
       setVideoId(null);
     }
-  }, [mode, currentIndex, songs, fetchVideo, pause]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, song?.id]);
 
   const goToSong = useCallback(
     (index: number) => {
       if (index < 0 || index >= songs.length) return;
       pause();
-      setCurrentIndex(index);
       if (mode === "audio") {
         playSong(songs[index], songs, index);
       }
@@ -148,17 +148,16 @@ export default function SamplesPage() {
       if (Math.abs(diff) > 60) {
         isSwiping.current = true;
         if (diff > 0) {
-          goToSong(currentIndex + 1);
+          goToSong(songIndex + 1);
         } else {
-          goToSong(currentIndex - 1);
+          goToSong(songIndex - 1);
         }
       }
     },
-    [currentIndex, goToSong]
+    [songIndex, goToSong]
   );
 
   const handleLike = useCallback(() => {
-    const song = songs[currentIndex];
     if (!song) return;
     if (liked) {
       removeFavorite(song.id);
@@ -166,10 +165,9 @@ export default function SamplesPage() {
       addFavorite(song);
     }
     setLiked(!liked);
-  }, [songs, currentIndex, liked]);
+  }, [song, liked]);
 
   const handleShare = useCallback(async () => {
-    const song = songs[currentIndex];
     if (!song) return;
     if (navigator.share) {
       try {
@@ -182,17 +180,22 @@ export default function SamplesPage() {
         // user cancelled
       }
     }
-  }, [songs, currentIndex]);
+  }, [song]);
 
   const handlePlayPause = useCallback(() => {
-    const song = songs[currentIndex];
     if (!song) return;
     if (currentSong?.id === song.id) {
       togglePlay();
     } else {
-      playSong(song, songs, currentIndex);
+      playSong(song, songs, songIndex);
     }
-  }, [songs, currentIndex, currentSong, togglePlay, playSong]);
+  }, [song, currentSong, togglePlay, playSong, songs, songIndex]);
+
+  const handleNext = useCallback(() => {
+    if (songIndex + 1 < songs.length) {
+      goToSong(songIndex + 1);
+    }
+  }, [songIndex, songs.length, goToSong]);
 
   if (loading) {
     return (
@@ -215,7 +218,6 @@ export default function SamplesPage() {
     );
   }
 
-  const song = songs[currentIndex];
   const isCurrentPlaying = currentSong?.id === song?.id && isPlaying;
 
   return (
@@ -294,8 +296,8 @@ export default function SamplesPage() {
             <button
               onClick={() => {
                 setMode("audio");
-                if (songs[currentIndex]) {
-                  playSong(songs[currentIndex], songs, currentIndex);
+                if (song) {
+                  playSong(song, songs, songIndex);
                 }
               }}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
@@ -385,7 +387,7 @@ export default function SamplesPage() {
             <span className="text-white text-[10px] drop-shadow-lg">Share</span>
           </button>
           <button
-            onClick={() => goToSong(currentIndex + 1)}
+            onClick={handleNext}
             className="flex flex-col items-center gap-1"
           >
             <IoPlaySkipForward className="text-white text-3xl drop-shadow-lg" />
@@ -395,13 +397,13 @@ export default function SamplesPage() {
 
         {/* Bottom indicator */}
         <div className="px-6 pb-20 flex items-center justify-center gap-1 pointer-events-auto">
-          {songs.slice(Math.max(0, currentIndex - 2), currentIndex + 3).map((s, i) => {
-            const actualIndex = Math.max(0, currentIndex - 2) + i;
+          {songs.slice(Math.max(0, songIndex - 2), songIndex + 3).map((s, i) => {
+            const actualIndex = Math.max(0, songIndex - 2) + i;
             return (
               <div
                 key={s.id}
                 className={`rounded-full transition-all ${
-                  actualIndex === currentIndex
+                  actualIndex === songIndex
                     ? "w-6 h-1.5 bg-spotify-green"
                     : "w-1.5 h-1.5 bg-white/30"
                 }`}
