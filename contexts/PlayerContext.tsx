@@ -61,6 +61,7 @@ export function usePlayer() {
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const handleEndedRef = useRef<() => void>(() => {});
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [queue, setQueue] = useState<Song[]>([]);
   const [originalQueue, setOriginalQueue] = useState<Song[]>([]);
@@ -87,7 +88,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     const onTimeUpdate = () => setProgress(audio.currentTime);
     const onDurationChange = () => setDuration(audio.duration || 0);
-    const onEnded = () => handleEnded();
+    const onEnded = () => handleEndedRef.current();
     const onPlay = () => {
       setIsPlaying(true);
       if (enhancerRef.current) {
@@ -117,55 +118,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleEnded = useCallback(() => {
-    if (repeat === "one") {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
-      }
-      return;
-    }
-    setQueueIndex((prev) => {
-      const nextIdx = prev + 1;
-      if (nextIdx < queue.length) {
-        return nextIdx;
-      }
-      if (repeat === "all" && queue.length > 0) {
-        return 0;
-      }
-      if (autoPlay && currentSong) {
-        fetchSuggestions(currentSong.id);
-      }
-      setIsPlaying(false);
-      return prev;
-    });
-  }, [repeat, queue.length, autoPlay, currentSong]);
-
-  const fetchSuggestions = useCallback(async (songId: string) => {
-    try {
-      const res = await fetch(`/api/songs/${songId}/suggestions`);
-      const data = await res.json();
-      if (data.songs && data.songs.length > 0) {
-        const suggestions = data.songs as Song[];
-        setQueue((prev) => [...prev, ...suggestions]);
-        setOriginalQueue((prev) => [...prev, ...suggestions]);
-        setQueueIndex((prev) => prev + 1);
-      }
-    } catch {
-      // silently fail
-    }
-  }, []);
-
-  useEffect(() => {
-    if (queueIndex >= 0 && queueIndex < queue.length) {
-      const song = queue[queueIndex];
-      if (song && song.id !== currentSong?.id) {
-        loadAndPlay(song);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queueIndex]);
 
   const getStreamUrl = useCallback((song: Song): string => {
     if (!song.downloadUrl || song.downloadUrl.length === 0) return "";
@@ -212,6 +164,53 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     },
     [getStreamUrl, playbackSpeed, audioMode]
   );
+
+  const fetchSuggestions = useCallback(async (songId: string) => {
+    try {
+      const res = await fetch(`/api/songs/${songId}/suggestions`);
+      const data = await res.json();
+      if (data.songs && data.songs.length > 0) {
+        const suggestions = data.songs as Song[];
+        const nextSong = suggestions[0];
+        setQueue((prev) => [...prev, ...suggestions]);
+        setOriginalQueue((prev) => [...prev, ...suggestions]);
+        setQueueIndex((prev) => prev + 1);
+        loadAndPlay(nextSong);
+      }
+    } catch {
+      // silently fail
+    }
+  }, [loadAndPlay]);
+
+  const handleEnded = useCallback(() => {
+    if (repeat === "one") {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
+      return;
+    }
+    const nextIdx = queueIndex + 1;
+    if (nextIdx < queue.length) {
+      setQueueIndex(nextIdx);
+      loadAndPlay(queue[nextIdx]);
+      return;
+    }
+    if (repeat === "all" && queue.length > 0) {
+      setQueueIndex(0);
+      loadAndPlay(queue[0]);
+      return;
+    }
+    if (autoPlay && currentSong) {
+      fetchSuggestions(currentSong.id);
+      return;
+    }
+    setIsPlaying(false);
+  }, [repeat, queue, queueIndex, autoPlay, currentSong, loadAndPlay, fetchSuggestions]);
+
+  useEffect(() => {
+    handleEndedRef.current = handleEnded;
+  }, [handleEnded]);
 
   const playSong = useCallback(
     (song: Song, songList?: Song[], index?: number) => {
