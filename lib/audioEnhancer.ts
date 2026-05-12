@@ -289,7 +289,34 @@ export class AudioEnhancer {
     if (mode !== "3d_surround") {
       this.stopSurroundEffect();
     }
-    this.applyMode(mode);
+    if (mode === "normal") {
+      this.bypass();
+    } else {
+      this.unbypass();
+      this.applyMode(mode);
+    }
+  }
+
+  private bypass(): void {
+    if (!this.isInitialized || !this.sourceNode || !this.audioContext) return;
+    this.currentMode = "normal";
+    this.sourceNode.disconnect();
+    this.sourceNode.connect(this.audioContext.destination);
+  }
+
+  private unbypass(): void {
+    if (!this.isInitialized || !this.sourceNode || !this.subBassFilter || !this.pannerNode || !this.audioContext) return;
+    this.sourceNode.disconnect();
+    this.sourceNode
+      .connect(this.subBassFilter)
+      .connect(this.bassFilter!)
+      .connect(this.midFilter!)
+      .connect(this.presenceFilter!)
+      .connect(this.trebleFilter!)
+      .connect(this.compressor!)
+      .connect(this.gainNode!)
+      .connect(this.pannerNode)
+      .connect(this.audioContext.destination);
   }
 
   resumeContext(): void {

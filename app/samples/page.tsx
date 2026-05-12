@@ -89,6 +89,15 @@ export default function SamplesPage() {
     }
   }, [currentIndex, songs]);
 
+  useEffect(() => {
+    if (currentSong && songs.length > 0) {
+      const idx = songs.findIndex((s) => s.id === currentSong.id);
+      if (idx >= 0 && idx !== currentIndex) {
+        setCurrentIndex(idx);
+      }
+    }
+  }, [currentSong, songs, currentIndex]);
+
   // Fetch video for current song when in video mode
   const fetchVideo = useCallback(async (song: Song) => {
     setVideoLoading(true);
