@@ -597,6 +597,213 @@ input[type="range"]::-webkit-slider-thumb {
     0 0 40px rgba(34, 211, 238, 0.1);
 }
 
+/* ===== Splash Screen 3D Holographic Animations ===== */
+
+/* Entry animation */
+@keyframes splash-enter {
+  0% { opacity: 0; transform: scale(0.8) translateY(30px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.splash-enter {
+  animation: splash-enter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Logo 3D perspective */
+.splash-logo-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* Logo floating animation */
+@keyframes splash-logo-hover {
+  0%, 100% { transform: translateY(0) rotateY(0deg) rotateX(0deg); }
+  25% { transform: translateY(-8px) rotateY(5deg) rotateX(-3deg); }
+  50% { transform: translateY(-4px) rotateY(0deg) rotateX(3deg); }
+  75% { transform: translateY(-10px) rotateY(-5deg) rotateX(-2deg); }
+}
+.splash-logo-float {
+  animation: splash-logo-hover 6s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+/* Holographic shimmer sweep on logo */
+@keyframes splash-shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.splash-shimmer {
+  animation: splash-shimmer-sweep 2.5s linear infinite;
+  background-size: 200% 100%;
+}
+
+/* Rotating holographic rings around logo */
+@keyframes splash-ring-spin {
+  from { transform: rotateZ(0deg); }
+  to { transform: rotateZ(360deg); }
+}
+@keyframes splash-ring-pulse {
+  0%, 100% { opacity: 0.3; transform: rotateZ(0deg) scale(1); }
+  50% { opacity: 0.6; transform: rotateZ(180deg) scale(1.05); }
+}
+.splash-ring-1 {
+  animation: splash-ring-spin 8s linear infinite;
+}
+.splash-ring-2 {
+  animation: splash-ring-spin 12s linear infinite reverse;
+}
+.splash-ring-3 {
+  animation: splash-ring-pulse 6s ease-in-out infinite;
+}
+
+/* Glow pulse behind logo */
+@keyframes splash-glow-anim {
+  0%, 100% { opacity: 0.25; transform: scale(1) rotate(0deg); }
+  50% { opacity: 0.45; transform: scale(1.1) rotate(180deg); }
+}
+.splash-glow {
+  animation: splash-glow-anim 4s ease-in-out infinite;
+}
+@keyframes splash-glow-breathe {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.5; }
+}
+.splash-glow-pulse {
+  animation: splash-glow-breathe 2s ease-in-out infinite;
+}
+
+/* Text entry animation */
+@keyframes splash-text-slide {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.splash-text-enter {
+  animation: splash-text-slide 0.8s ease-out 0.3s both;
+}
+
+/* Text glow */
+.splash-text-glow {
+  text-shadow: 0 0 20px rgba(192, 38, 211, 0.3), 0 0 40px rgba(34, 211, 238, 0.15);
+}
+
+/* Line expand */
+@keyframes splash-line-grow {
+  0% { width: 0; opacity: 0; }
+  100% { width: 120px; opacity: 1; }
+}
+.splash-line-expand {
+  animation: splash-line-grow 0.8s ease-out 0.6s both;
+}
+
+/* Admin photo 3D holographic */
+.splash-admin-container {
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+/* Photo 3D floating with tilt */
+@keyframes splash-photo-3d-float {
+  0%, 100% { transform: translateY(0) rotateY(0deg) rotateX(0deg) scale(1); }
+  20% { transform: translateY(-6px) rotateY(8deg) rotateX(-4deg) scale(1.02); }
+  40% { transform: translateY(-10px) rotateY(-4deg) rotateX(6deg) scale(1.01); }
+  60% { transform: translateY(-4px) rotateY(-8deg) rotateX(-3deg) scale(1.03); }
+  80% { transform: translateY(-8px) rotateY(5deg) rotateX(4deg) scale(1.01); }
+}
+.splash-photo-3d {
+  animation: splash-photo-3d-float 8s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+/* Rotating gradient border on photo */
+@keyframes splash-border-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.splash-border-rotate {
+  animation: splash-border-spin 4s linear infinite;
+  border-radius: 50%;
+}
+
+/* 360° holographic rings around admin photo */
+@keyframes splash-holo-orbit-x {
+  from { transform: rotateX(75deg) rotateZ(0deg); }
+  to { transform: rotateX(75deg) rotateZ(360deg); }
+}
+@keyframes splash-holo-orbit-y {
+  from { transform: rotateY(75deg) rotateZ(0deg); }
+  to { transform: rotateY(75deg) rotateZ(360deg); }
+}
+@keyframes splash-holo-orbit-z {
+  from { transform: rotateX(45deg) rotateY(45deg) rotateZ(0deg); }
+  to { transform: rotateX(45deg) rotateY(45deg) rotateZ(360deg); }
+}
+.splash-holo-ring-x {
+  animation: splash-holo-orbit-x 6s linear infinite;
+  transform-style: preserve-3d;
+}
+.splash-holo-ring-y {
+  animation: splash-holo-orbit-y 8s linear infinite reverse;
+  transform-style: preserve-3d;
+}
+.splash-holo-ring-z {
+  animation: splash-holo-orbit-z 10s linear infinite;
+  transform-style: preserve-3d;
+}
+
+/* Scanning light effect */
+@keyframes splash-scan-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.splash-scan-light {
+  animation: splash-scan-rotate 3s linear infinite;
+}
+
+/* Photo glow rotation */
+@keyframes splash-photo-glow-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.splash-photo-glow {
+  animation: splash-photo-glow-spin 5s linear infinite;
+}
+
+/* Diamond particles orbiting */
+@keyframes splash-diamond-orbit {
+  0% { opacity: 0; transform: rotate(45deg) translate(70px) scale(0); }
+  20% { opacity: 1; transform: rotate(45deg) translate(75px) scale(1); }
+  80% { opacity: 1; transform: rotate(45deg) translate(80px) scale(1); }
+  100% { opacity: 0; transform: rotate(405deg) translate(70px) scale(0); }
+}
+.splash-diamond-particle {
+  animation: splash-diamond-orbit 3.2s ease-in-out infinite;
+}
+
+/* Photo shimmer overlay */
+@keyframes splash-photo-shimmer-move {
+  0% { background-position: -200% -200%; }
+  100% { background-position: 200% 200%; }
+}
+.splash-photo-shimmer {
+  animation: splash-photo-shimmer-move 3s linear infinite;
+  background-size: 200% 200%;
+}
+
+/* Admin name holographic text */
+.splash-admin-name {
+  background: linear-gradient(135deg, #ec4899, #c026d3, #7c3aed, #22d3ee, #ec4899);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease infinite;
+  text-shadow: none;
+}
+
+/* Label glow */
+.splash-label-glow {
+  text-shadow: 0 0 10px rgba(192, 38, 211, 0.3);
+}
+
 /* Holographic wave */
 @keyframes holo-wave {
   0% { transform: translateX(-100%) skewX(-15deg); }
