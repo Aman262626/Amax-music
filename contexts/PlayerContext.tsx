@@ -136,7 +136,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadAndPlay = useCallback(
-    (song: Song) => {
+    async (song: Song) => {
       const audio = audioRef.current;
       if (!audio) return;
 
@@ -156,7 +156,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         if (!enhancerRef.current) {
           enhancerRef.current = new AudioEnhancer();
         }
-        enhancerRef.current.init(audio);
+        await enhancerRef.current.init(audio);
         enhancerRef.current.applyMode(audioMode);
       }
 
@@ -406,7 +406,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setAutoPlay((prev) => !prev);
   }, []);
 
-  const setAudioMode = useCallback((mode: AudioMode) => {
+  const setAudioMode = useCallback(async (mode: AudioMode) => {
     setAudioModeState(mode);
     const audio = audioRef.current;
     if (mode === "normal") {
@@ -417,7 +417,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (!enhancerRef.current) {
         enhancerRef.current = new AudioEnhancer();
       }
-      enhancerRef.current.init(audio);
+      await enhancerRef.current.init(audio);
       enhancerRef.current.setMode(mode);
     }
   }, []);

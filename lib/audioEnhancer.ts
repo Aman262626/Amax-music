@@ -46,12 +46,18 @@ export class AudioEnhancer {
   private isInitialized = false;
   private audioElement: HTMLAudioElement | null = null;
 
-  init(audio: HTMLAudioElement): void {
+  async init(audio: HTMLAudioElement): Promise<void> {
     if (this.isInitialized && this.audioElement === audio) return;
 
     try {
       this.audioContext = new AudioContext();
       this.audioElement = audio;
+
+      // Resume AudioContext FIRST — on mobile, it starts suspended
+      // and createMediaElementSource won't produce sound until it's running
+      if (this.audioContext.state === "suspended") {
+        await this.audioContext.resume();
+      }
 
       this.sourceNode = this.audioContext.createMediaElementSource(audio);
 
@@ -107,23 +113,11 @@ export class AudioEnhancer {
       this.boostGainNode = this.audioContext.createGain();
       this.boostGainNode.gain.value = 1;
 
-      // Main signal chain: EQ → pre-gain → compressor → boost-gain → panner → out
-      this.sourceNode
-        .connect(this.subBassFilter)
-        .connect(this.bassFilter)
-        .connect(this.midFilter)
-        .connect(this.presenceFilter)
-        .connect(this.trebleFilter)
-        .connect(this.gainNode)
-        .connect(this.compressor)
-        .connect(this.boostGainNode)
-        .connect(this.pannerNode)
-        .connect(this.audioContext.destination);
+      // Start in bypass — connect source directly to output
+      // applyMode will reconnect through the filter chain if needed
+      this.sourceNode.connect(this.audioContext.destination);
 
       this.isInitialized = true;
-      if (this.audioContext.state === "suspended") {
-        this.audioContext.resume().catch(() => {});
-      }
       this.applyMode(this.currentMode);
     } catch {
       // Web Audio API not supported, fall back silently
@@ -296,6 +290,10 @@ export class AudioEnhancer {
   setMode(mode: AudioMode): void {
     if (mode !== "3d_surround") {
       this.stopSurroundEffect();
+    }
+    // Ensure AudioContext is running before routing audio
+    if (this.audioContext?.state === "suspended") {
+      this.audioContext.resume().catch(() => {});
     }
     if (mode === "normal") {
       this.bypass();
