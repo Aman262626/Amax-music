@@ -11,6 +11,7 @@ import React, {
 import type { Song, RepeatMode } from "@/lib/types";
 import { getBestDownloadUrl, shuffleArray } from "@/lib/utils";
 import { addToHistory, getPreferredQuality } from "@/lib/storage";
+import { AudioEnhancer, type AudioMode } from "@/lib/audioEnhancer";
 
 interface PlayerContextType {
   currentSong: Song | null;
@@ -27,6 +28,7 @@ interface PlayerContextType {
   playbackSpeed: number;
   sleepTimer: number;
   autoPlay: boolean;
+  audioMode: AudioMode;
 
   playSong: (song: Song, songList?: Song[], index?: number) => void;
   togglePlay: () => void;
@@ -45,6 +47,7 @@ interface PlayerContextType {
   setPlaybackSpeed: (speed: number) => void;
   setSleepTimer: (minutes: number) => void;
   toggleAutoPlay: () => void;
+  setAudioMode: (mode: AudioMode) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -72,6 +75,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const [sleepTimer, setSleepTimerState] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
+  const [audioMode, setAudioModeState] = useState<AudioMode>("normal");
+  const enhancerRef = useRef<AudioEnhancer | null>(null);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -83,7 +88,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const onTimeUpdate = () => setProgress(audio.currentTime);
     const onDurationChange = () => setDuration(audio.duration || 0);
     const onEnded = () => handleEnded();
-    const onPlay = () => setIsPlaying(true);
+    const onPlay = () => {
+      setIsPlaying(true);
+      if (enhancerRef.current) {
+        enhancerRef.current.resumeContext();
+      }
+    };
     const onPause = () => setIsPlaying(false);
     const onWaiting = () => setIsBuffering(true);
     const onCanPlay = () => setIsBuffering(false);
@@ -179,6 +189,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setDuration(song.duration || 0);
       audio.src = url;
       audio.playbackRate = playbackSpeed;
+      if (!enhancerRef.current) {
+        enhancerRef.current = new AudioEnhancer();
+      }
+      enhancerRef.current.init(audio);
+      enhancerRef.current.applyMode(audioMode);
+
       audio.play().catch(() => {});
       setIsPlaying(true);
       addToHistory(song);
@@ -194,7 +210,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [getStreamUrl, playbackSpeed]
+    [getStreamUrl, playbackSpeed, audioMode]
   );
 
   const playSong = useCallback(
@@ -378,6 +394,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setAutoPlay((prev) => !prev);
   }, []);
 
+  const setAudioMode = useCallback((mode: AudioMode) => {
+    setAudioModeState(mode);
+    if (enhancerRef.current) {
+      enhancerRef.current.setMode(mode);
+    }
+  }, []);
+
   useEffect(() => {
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", resume);
@@ -434,6 +457,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         playbackSpeed,
         sleepTimer,
         autoPlay,
+        audioMode,
         playSong,
         togglePlay,
         pause,
@@ -451,6 +475,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         setPlaybackSpeed,
         setSleepTimer,
         toggleAutoPlay,
+        setAudioMode,
       }}
     >
       {children}
