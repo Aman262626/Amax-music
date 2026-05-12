@@ -6,6 +6,7 @@ import { IoHome, IoSearch, IoLibrary, IoPersonCircle, IoMusicalNotes } from "rea
 import { IoMdTrendingUp } from "react-icons/io";
 import SafeImage from "./SafeImage";
 import NowPlayingBar from "./NowPlayingBar";
+import ApiStatusBadge from "./ApiStatusBadge";
 
 const NAV_ITEMS = [
   { href: "/", icon: IoHome, label: "Home" },
@@ -130,10 +131,11 @@ export default function Sidebar() {
           </p>
         </div>
 
-        {/* Keyboard shortcut hint */}
-        <div className="mt-4 text-center">
+        {/* API Status & Keyboard shortcut hint */}
+        <div className="mt-4 flex items-center justify-between">
+          <ApiStatusBadge />
           <p className="text-spotify-light-gray text-[10px]">
-            Press <kbd className="px-1 py-0.5 glass rounded text-white/60 text-[10px] font-mono">?</kbd> for keyboard shortcuts
+            Press <kbd className="px-1 py-0.5 glass rounded text-white/60 text-[10px] font-mono">?</kbd> for shortcuts
           </p>
         </div>
       </div>
