@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { IoClose, IoVideocam, IoExpand } from "react-icons/io5";
 
 export default function VideoPlayer() {
-  const { currentSong } = usePlayer();
+  const { currentSong, pause, isPlaying } = usePlayer();
+  const wasPlayingRef = useRef(false);
   const [videoId, setVideoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -32,8 +33,11 @@ export default function VideoPlayer() {
 
   useEffect(() => {
     if (isOpen && currentSong) {
+      wasPlayingRef.current = isPlaying;
+      pause();
       searchVideo();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, currentSong, searchVideo]);
 
   if (!currentSong) return null;
@@ -80,6 +84,7 @@ export default function VideoPlayer() {
                   onClick={() => {
                     setIsOpen(false);
                     setIsFullscreen(false);
+                    setVideoId(null);
                   }}
                   className="p-1.5 text-white/70 hover:text-white transition-colors"
                 >

@@ -109,11 +109,12 @@ export default function SamplesPage() {
 
   useEffect(() => {
     if (mode === "video" && songs[currentIndex]) {
+      pause();
       fetchVideo(songs[currentIndex]);
     } else {
       setVideoId(null);
     }
-  }, [mode, currentIndex, songs, fetchVideo]);
+  }, [mode, currentIndex, songs, fetchVideo, pause]);
 
   const goToSong = useCallback(
     (index: number) => {
@@ -269,7 +270,12 @@ export default function SamplesPage() {
         <div className="flex justify-center mb-4 pointer-events-auto">
           <div className="flex bg-white/10 rounded-full p-1 backdrop-blur-lg">
             <button
-              onClick={() => setMode("audio")}
+              onClick={() => {
+                setMode("audio");
+                if (songs[currentIndex]) {
+                  playSong(songs[currentIndex], songs, currentIndex);
+                }
+              }}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                 mode === "audio"
                   ? "bg-spotify-green text-black"
@@ -280,7 +286,10 @@ export default function SamplesPage() {
               Audio
             </button>
             <button
-              onClick={() => setMode("video")}
+              onClick={() => {
+                pause();
+                setMode("video");
+              }}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                 mode === "video"
                   ? "bg-spotify-green text-black"

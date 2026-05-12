@@ -18,9 +18,9 @@ export default function SongCard({ song, songs }: SongCardProps) {
   return (
     <button
       onClick={() => playSong(song, songs)}
-      className="group glass-card rounded-xl p-3 sm:p-4 text-left w-full"
+      className="group glass-card holo-card rounded-xl p-3 sm:p-4 text-left w-full"
     >
-      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg">
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg album-art-3d">
         <SafeImage
           src={song.image}
           alt={song.name}
@@ -45,7 +45,7 @@ export default function SongCard({ song, songs }: SongCardProps) {
           </div>
         )}
       </div>
-      <p className={`text-sm font-medium truncate ${isActive ? "text-spotify-green" : "text-white"}`}>
+      <p className={`text-sm font-medium truncate ${isActive ? "gradient-text-holo" : "text-white"}`}>
         {song.name}
       </p>
       <p className="text-spotify-light-gray text-xs truncate mt-0.5">

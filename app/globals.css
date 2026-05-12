@@ -85,36 +85,53 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
 .glass-card:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-4px) rotateX(2deg) rotateY(-1deg);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(192, 38, 211, 0.15),
+    0 0 40px rgba(34, 211, 238, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Glow effects */
 .glow-green {
-  box-shadow: 0 0 20px rgba(192, 38, 211, 0.3), 0 0 60px rgba(192, 38, 211, 0.1);
+  box-shadow:
+    0 0 15px rgba(192, 38, 211, 0.4),
+    0 0 30px rgba(192, 38, 211, 0.2),
+    0 0 60px rgba(192, 38, 211, 0.1),
+    0 0 80px rgba(34, 211, 238, 0.05);
 }
 
 .glow-pink {
-  box-shadow: 0 0 20px rgba(255, 107, 157, 0.3), 0 0 60px rgba(255, 107, 157, 0.1);
+  box-shadow:
+    0 0 15px rgba(255, 107, 157, 0.4),
+    0 0 30px rgba(255, 107, 157, 0.2),
+    0 0 60px rgba(255, 107, 157, 0.1);
 }
 
 .glow-purple {
-  box-shadow: 0 0 20px rgba(192, 132, 252, 0.3), 0 0 60px rgba(192, 132, 252, 0.1);
+  box-shadow:
+    0 0 15px rgba(192, 132, 252, 0.4),
+    0 0 30px rgba(192, 132, 252, 0.2),
+    0 0 60px rgba(192, 132, 252, 0.1);
 }
 
 /* Multi-color gradient backgrounds */
 .gradient-mesh {
   background:
-    radial-gradient(at 20% 20%, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
-    radial-gradient(at 80% 20%, rgba(192, 132, 252, 0.15) 0%, transparent 50%),
-    radial-gradient(at 40% 80%, rgba(192, 38, 211, 0.1) 0%, transparent 50%),
-    radial-gradient(at 80% 80%, rgba(96, 165, 250, 0.1) 0%, transparent 50%);
+    radial-gradient(at 20% 20%, rgba(255, 107, 157, 0.18) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(192, 132, 252, 0.18) 0%, transparent 50%),
+    radial-gradient(at 40% 80%, rgba(192, 38, 211, 0.12) 0%, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(34, 211, 238, 0.12) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(96, 165, 250, 0.06) 0%, transparent 70%);
 }
 
 .gradient-mesh-alt {
@@ -234,8 +251,8 @@ body {
 
 /* Progress bar with gradient */
 .progress-gradient {
-  background: linear-gradient(90deg, var(--amax-green), var(--accent-cyan), var(--accent-purple));
-  background-size: 200% 100%;
+  background: linear-gradient(90deg, var(--amax-green), var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+  background-size: 300% 100%;
   animation: gradient-shift 3s ease infinite;
 }
 
@@ -390,4 +407,215 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .animate-spin-slow {
   animation: spin-slow-bg 20s linear infinite;
+}
+
+/* ===== 3D Holographic Effects ===== */
+
+/* Holographic shimmer overlay */
+@keyframes holo-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.holo-card {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.holo-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(192, 38, 211, 0.08) 38%,
+    rgba(34, 211, 238, 0.12) 42%,
+    rgba(192, 132, 252, 0.08) 46%,
+    transparent 54%
+  );
+  background-size: 200% 100%;
+  animation: holo-shimmer 4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.holo-card:hover::before {
+  background: linear-gradient(
+    105deg,
+    transparent 25%,
+    rgba(192, 38, 211, 0.15) 35%,
+    rgba(34, 211, 238, 0.2) 42%,
+    rgba(255, 107, 157, 0.15) 48%,
+    rgba(192, 132, 252, 0.15) 52%,
+    transparent 62%
+  );
+  background-size: 200% 100%;
+  animation: holo-shimmer 2.5s linear infinite;
+}
+
+/* 3D tilt effect on hover */
+.tilt-3d {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+}
+
+.tilt-3d:hover {
+  transform: perspective(800px) rotateX(4deg) rotateY(-4deg) translateZ(10px);
+}
+
+/* Holographic gradient text */
+.gradient-text-holo {
+  background: linear-gradient(135deg, #c026d3, #22d3ee, #c084fc, #ff6b9d, #c026d3);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* Holographic border glow */
+@keyframes holo-border {
+  0% { border-color: rgba(192, 38, 211, 0.3); box-shadow: 0 0 15px rgba(192, 38, 211, 0.15); }
+  25% { border-color: rgba(34, 211, 238, 0.3); box-shadow: 0 0 15px rgba(34, 211, 238, 0.15); }
+  50% { border-color: rgba(192, 132, 252, 0.3); box-shadow: 0 0 15px rgba(192, 132, 252, 0.15); }
+  75% { border-color: rgba(255, 107, 157, 0.3); box-shadow: 0 0 15px rgba(255, 107, 157, 0.15); }
+  100% { border-color: rgba(192, 38, 211, 0.3); box-shadow: 0 0 15px rgba(192, 38, 211, 0.15); }
+}
+
+.holo-border {
+  border: 1px solid rgba(192, 38, 211, 0.3);
+  animation: holo-border 5s ease infinite;
+}
+
+/* 3D Visualizer ring */
+@keyframes ring-rotate {
+  from { transform: rotateY(0deg) rotateX(20deg); }
+  to { transform: rotateY(360deg) rotateX(20deg); }
+}
+
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+.holo-ring {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, rgba(192, 38, 211, 0.4), rgba(34, 211, 238, 0.4)) 1;
+  border-radius: 50%;
+  animation: ring-pulse 3s ease-in-out infinite;
+}
+
+/* Floating orbs */
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.3; }
+  25% { transform: translateY(-15px) translateX(10px) scale(1.1); opacity: 0.5; }
+  50% { transform: translateY(-5px) translateX(-5px) scale(0.95); opacity: 0.4; }
+  75% { transform: translateY(-20px) translateX(-10px) scale(1.05); opacity: 0.6; }
+}
+
+.orb {
+  border-radius: 50%;
+  filter: blur(20px);
+  animation: orb-float 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Iridescent glass */
+.glass-iridescent {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-iridescent::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    135deg,
+    rgba(192, 38, 211, 0.1),
+    rgba(34, 211, 238, 0.08),
+    rgba(192, 132, 252, 0.06),
+    rgba(255, 107, 157, 0.08)
+  );
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.glass-iridescent:hover::after {
+  opacity: 1;
+}
+
+/* Neon underline effect */
+@keyframes neon-line {
+  0% { width: 0; opacity: 0; }
+  50% { opacity: 1; }
+  100% { width: 100%; opacity: 0.8; }
+}
+
+.neon-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amax-green), var(--accent-cyan));
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(192, 38, 211, 0.5);
+  animation: neon-line 0.3s ease forwards;
+}
+
+/* 3D depth shadow for player */
+.depth-shadow {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 16px 32px rgba(0, 0, 0, 0.15),
+    0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+/* Album art 3D hover */
+.album-art-3d {
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+}
+
+.album-art-3d:hover {
+  transform: perspective(600px) rotateY(-8deg) rotateX(4deg) scale(1.03);
+  box-shadow:
+    10px 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(192, 38, 211, 0.2),
+    0 0 40px rgba(34, 211, 238, 0.1);
+}
+
+/* Holographic wave */
+@keyframes holo-wave {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+.holo-wave::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  animation: holo-wave 3s ease-in-out infinite;
+  pointer-events: none;
 }

@@ -31,15 +31,22 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Animated gradient background */}
+      {/* Holographic animated gradient background */}
       <div className="absolute inset-0 overflow-hidden">
         <div
           className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-spin-slow"
           style={{
-            background: "conic-gradient(from 0deg, #c026d3, #7c3aed, #c026d3, #ec4899, #c026d3)",
-            opacity: 0.15,
+            background: "conic-gradient(from 0deg, #c026d3, #22d3ee, #7c3aed, #ff6b9d, #c026d3, #60a5fa, #c026d3)",
+            opacity: 0.2,
           }}
         />
+      </div>
+
+      {/* Holographic orbs */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-48 h-48 orb bg-purple-600/25" />
+        <div className="absolute bottom-1/4 right-1/4 w-36 h-36 orb bg-cyan-400/20" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 right-1/3 w-28 h-28 orb bg-pink-500/20" style={{ animationDelay: '4s' }} />
       </div>
 
       {/* Subtle particles */}
@@ -70,7 +77,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
                 height={192}
                 className="rounded-3xl shadow-2xl"
                 style={{
-                  boxShadow: "0 0 60px rgba(192, 38, 211, 0.4), 0 0 120px rgba(124, 58, 237, 0.2)",
+                  boxShadow: "0 0 40px rgba(192, 38, 211, 0.4), 0 0 80px rgba(34, 211, 238, 0.2), 0 0 120px rgba(124, 58, 237, 0.15)",
                 }}
                 unoptimized
               />
@@ -78,14 +85,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
 
             {/* App name */}
             <div className="text-center">
-              <h1
-                className="text-4xl sm:text-5xl font-black tracking-wider"
-                style={{
-                  background: "linear-gradient(135deg, #ec4899, #c026d3, #7c3aed)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
+              <h1 className="text-4xl sm:text-5xl font-black tracking-wider gradient-text-holo">
                 AMAX
               </h1>
               <p className="text-white/60 text-sm tracking-[0.3em] mt-1">MUSIC</p>

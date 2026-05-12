@@ -8,9 +8,9 @@ export default function PlaylistCard({ playlist }: { playlist: Playlist }) {
   return (
     <Link
       href={`/playlist/${playlist.id}`}
-      className="group glass-card rounded-xl p-3 sm:p-4 block"
+      className="group glass-card holo-card rounded-xl p-3 sm:p-4 block"
     >
-      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg">
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg album-art-3d">
         <SafeImage
           src={playlist.image}
           alt={playlist.name}

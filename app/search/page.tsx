@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import SongCard from "@/components/SongCard";
 import SongRow from "@/components/SongRow";
@@ -35,6 +35,42 @@ const BROWSE_CATEGORIES = [
   { label: "Rock", gradient: "from-red-600 to-red-800", query: "rock" },
   { label: "Indie", gradient: "from-sky-500 to-accent-blue", query: "indie" },
 ];
+
+function SearchInput({ urlQuery, router }: { urlQuery: string; router: ReturnType<typeof useRouter> }) {
+  const [inputValue, setInputValue] = useState(urlQuery);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setInputValue(urlQuery);
+  }, [urlQuery]);
+
+  const handleChange = useCallback(
+    (val: string) => {
+      setInputValue(val);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        if (val.trim()) {
+          router.push(`/search?q=${encodeURIComponent(val.trim())}`);
+        }
+      }, 400);
+    },
+    [router]
+  );
+
+  return (
+    <div className="relative max-w-lg w-full">
+      <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-spotify-light-gray text-lg" />
+      <input
+        type="text"
+        value={inputValue}
+        onChange={(e) => handleChange(e.target.value)}
+        placeholder="Search songs, albums, artists..."
+        className="w-full pl-10 pr-4 py-3 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-1 focus:ring-spotify-green/50 transition-all"
+        autoFocus
+      />
+    </div>
+  );
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -100,22 +136,7 @@ function SearchContent() {
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">
           Search
         </h1>
-        <div className="relative max-w-lg w-full">
-          <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-spotify-light-gray text-lg" />
-          <input
-            type="text"
-            defaultValue={urlQuery}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val.trim()) {
-                router.push(`/search?q=${encodeURIComponent(val.trim())}`);
-              }
-            }}
-            placeholder="Search songs, albums, artists..."
-            className="w-full pl-10 pr-4 py-3 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-1 focus:ring-spotify-green/50 transition-all"
-            autoFocus
-          />
-        </div>
+        <SearchInput urlQuery={urlQuery} router={router} />
       </div>
 
       {/* Browse categories when no search */}
