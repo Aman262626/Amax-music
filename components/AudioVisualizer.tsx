@@ -14,12 +14,21 @@ export default function AudioVisualizer({ size = "small" }: AudioVisualizerProps
 
   const config = heights[size];
 
+  const colors = {
+    tiny: ["bg-spotify-green", "bg-spotify-green", "bg-spotify-green", "bg-spotify-green"],
+    small: ["bg-spotify-green", "bg-accent-cyan", "bg-spotify-green", "bg-accent-purple"],
+    medium: ["bg-spotify-green", "bg-accent-cyan", "bg-accent-purple", "bg-accent-pink"],
+    large: ["bg-spotify-green", "bg-accent-cyan", "bg-accent-purple", "bg-accent-pink"],
+  };
+
+  const barColors = colors[size];
+
   return (
     <div className={`flex items-end ${config.gap}`}>
-      <div className={`${config.barW} bg-spotify-green rounded-full audio-bar-1`} />
-      <div className={`${config.barW} bg-spotify-green rounded-full audio-bar-2`} />
-      <div className={`${config.barW} bg-spotify-green rounded-full audio-bar-3`} />
-      <div className={`${config.barW} bg-spotify-green rounded-full audio-bar-4`} />
+      <div className={`${config.barW} ${barColors[0]} rounded-full audio-bar-1`} />
+      <div className={`${config.barW} ${barColors[1]} rounded-full audio-bar-2`} />
+      <div className={`${config.barW} ${barColors[2]} rounded-full audio-bar-3`} />
+      <div className={`${config.barW} ${barColors[3]} rounded-full audio-bar-4`} />
     </div>
   );
 }

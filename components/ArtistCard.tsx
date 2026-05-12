@@ -8,7 +8,7 @@ export default function ArtistCard({ artist }: { artist: Artist }) {
   return (
     <Link
       href={`/artist/${artist.id}`}
-      className="group glass-card rounded-xl p-3 sm:p-4 block text-center"
+      className="group glass-card holo-card rounded-xl p-3 sm:p-4 block text-center"
     >
       <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 shadow-lg mx-auto">
         <SafeImage

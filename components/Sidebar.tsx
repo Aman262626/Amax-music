@@ -22,7 +22,7 @@ export default function Sidebar() {
       <div className="glass rounded-xl p-4 pb-2">
         <Link href="/" className="flex items-center gap-2 mb-5 px-2 group">
           <SafeImage src="/icon-96x96.png" alt="AMAX" width={32} height={32} className="rounded-lg shadow-lg group-hover:glow-green transition-all" />
-          <span className="text-white font-bold text-xl tracking-tight gradient-text">
+          <span className="text-white font-bold text-xl tracking-tight gradient-text-holo">
             AMAX
           </span>
         </Link>
@@ -97,8 +97,8 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        <div className="mt-6 p-4 glass-card rounded-xl text-center">
-          <p className="text-white text-sm font-semibold mb-1">AMAX Premium</p>
+        <div className="mt-6 p-4 glass-card holo-card rounded-xl text-center holo-border">
+          <p className="text-white text-sm font-semibold mb-1 gradient-text-holo">AMAX Premium</p>
           <p className="text-spotify-light-gray text-xs">
             Unlimited music streaming with downloads
           </p>

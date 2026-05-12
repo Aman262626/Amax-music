@@ -155,13 +155,13 @@ export default function Player() {
   return (
     <>
       {/* Desktop Player Bar */}
-      <div className="hidden lg:grid grid-cols-3 items-center glass-strong px-4 h-[90px] z-50 relative">
+      <div className="hidden lg:grid grid-cols-3 items-center glass-strong px-4 h-[90px] z-50 relative depth-shadow">
         {/* Gradient accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] progress-gradient" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] progress-gradient" />
 
         {/* Left: Song info */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-lg">
+          <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 shadow-lg album-art-3d">
             <SafeImage
               src={currentSong.image}
               alt={currentSong.name}
@@ -441,6 +441,10 @@ export default function Player() {
           {/* Dynamic background */}
           <div className="absolute inset-0 bg-gradient-to-b from-spotify-gray to-black" />
           <div className="absolute inset-0 gradient-mesh opacity-60" />
+          {/* Holographic orbs */}
+          <div className="absolute top-20 left-10 w-32 h-32 orb bg-purple-500/30" />
+          <div className="absolute bottom-40 right-10 w-24 h-24 orb bg-cyan-400/20" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 orb bg-pink-500/20" style={{ animationDelay: '4s' }} />
 
           {/* Song image blurred backdrop */}
           <div
@@ -470,9 +474,16 @@ export default function Player() {
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 overflow-y-auto pb-8">
-              {/* Album art with vinyl effect */}
+              {/* Album art with 3D holographic effect */}
               <div className="relative">
-                <div className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl ${isPlaying ? 'glow-green' : ''}`}>
+                {/* Holographic rings */}
+                {isPlaying && (
+                  <>
+                    <div className="absolute -inset-4 rounded-2xl holo-border opacity-50" />
+                    <div className="absolute -inset-8 rounded-3xl holo-border opacity-30" style={{ animationDelay: '1.5s' }} />
+                  </>
+                )}
+                <div className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl album-art-3d ${isPlaying ? 'glow-green' : ''}`}>
                   <SafeImage
                     src={currentSong.imageHigh || currentSong.image}
                     alt={currentSong.name}
@@ -480,6 +491,10 @@ export default function Player() {
                     className="object-cover"
                     unoptimized
                   />
+                  {/* Holographic shimmer overlay */}
+                  {isPlaying && (
+                    <div className="absolute inset-0 holo-card pointer-events-none" />
+                  )}
                 </div>
                 {isPlaying && (
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-end gap-[3px]">

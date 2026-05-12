@@ -12,7 +12,7 @@ interface VideoPreviewScrollProps {
 }
 
 export default function VideoPreviewScroll({ songs, title }: VideoPreviewScrollProps) {
-  const { playSong } = usePlayer();
+  const { playSong, pause } = usePlayer();
   const [loadingVideo, setLoadingVideo] = useState<string | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const [videoSongId, setVideoSongId] = useState<string | null>(null);
@@ -24,6 +24,7 @@ export default function VideoPreviewScroll({ songs, title }: VideoPreviewScrollP
       setVideoSongId(null);
       return;
     }
+    pause();
     setLoadingVideo(song.id);
     try {
       const q = `${song.name} ${song.artist}`;
@@ -38,7 +39,7 @@ export default function VideoPreviewScroll({ songs, title }: VideoPreviewScrollP
     } finally {
       setLoadingVideo(null);
     }
-  }, [videoSongId]);
+  }, [videoSongId, pause]);
 
   const scroll = useCallback((direction: "left" | "right") => {
     if (!scrollRef.current) return;
