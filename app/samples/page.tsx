@@ -128,12 +128,13 @@ export default function SamplesPage() {
   const goToSong = useCallback(
     (index: number) => {
       if (index < 0 || index >= songs.length) return;
+      pause();
       setCurrentIndex(index);
       if (mode === "audio") {
         playSong(songs[index], songs, index);
       }
     },
-    [songs, playSong, mode]
+    [songs, playSong, mode, pause]
   );
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -182,6 +183,16 @@ export default function SamplesPage() {
       }
     }
   }, [songs, currentIndex]);
+
+  const handlePlayPause = useCallback(() => {
+    const song = songs[currentIndex];
+    if (!song) return;
+    if (currentSong?.id === song.id) {
+      togglePlay();
+    } else {
+      playSong(song, songs, currentIndex);
+    }
+  }, [songs, currentIndex, currentSong, togglePlay, playSong]);
 
   if (loading) {
     return (
@@ -321,13 +332,7 @@ export default function SamplesPage() {
               className={`relative w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden shadow-2xl mb-8 ${
                 isCurrentPlaying ? "animate-pulse-slow glow-green" : ""
               }`}
-              onClick={() => {
-                if (currentSong?.id === song.id) {
-                  togglePlay();
-                } else {
-                  playSong(song, songs, currentIndex);
-                }
-              }}
+              onClick={handlePlayPause}
             >
               <SafeImage
                 src={song.imageHigh || song.image}

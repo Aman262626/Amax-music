@@ -94,8 +94,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (enhancerRef.current) {
         enhancerRef.current.resumeContext();
       }
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+      }
     };
-    const onPause = () => setIsPlaying(false);
+    const onPause = () => {
+      setIsPlaying(false);
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
+    };
     const onWaiting = () => setIsBuffering(true);
     const onCanPlay = () => setIsBuffering(false);
 
@@ -136,10 +144,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (!url) return;
 
       audio.pause();
+      audio.currentTime = 0;
       setCurrentSong(song);
       setProgress(0);
       setDuration(song.duration || 0);
       audio.src = url;
+      audio.load();
       audio.playbackRate = playbackSpeed;
 
       if (audioMode !== "normal") {
