@@ -141,11 +141,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setDuration(song.duration || 0);
       audio.src = url;
       audio.playbackRate = playbackSpeed;
-      if (!enhancerRef.current) {
-        enhancerRef.current = new AudioEnhancer();
+
+      if (audioMode !== "normal") {
+        if (!enhancerRef.current) {
+          enhancerRef.current = new AudioEnhancer();
+        }
+        enhancerRef.current.init(audio);
+        enhancerRef.current.applyMode(audioMode);
       }
-      enhancerRef.current.init(audio);
-      enhancerRef.current.applyMode(audioMode);
 
       audio.play().catch(() => {});
       setIsPlaying(true);
@@ -395,7 +398,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const setAudioMode = useCallback((mode: AudioMode) => {
     setAudioModeState(mode);
-    if (enhancerRef.current) {
+    const audio = audioRef.current;
+    if (mode === "normal") {
+      if (enhancerRef.current) {
+        enhancerRef.current.setMode(mode);
+      }
+    } else if (audio) {
+      if (!enhancerRef.current) {
+        enhancerRef.current = new AudioEnhancer();
+      }
+      enhancerRef.current.init(audio);
       enhancerRef.current.setMode(mode);
     }
   }, []);

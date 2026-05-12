@@ -116,6 +116,9 @@ export class AudioEnhancer {
         .connect(this.audioContext.destination);
 
       this.isInitialized = true;
+      if (this.audioContext.state === "suspended") {
+        this.audioContext.resume().catch(() => {});
+      }
       this.applyMode(this.currentMode);
     } catch {
       // Web Audio API not supported, fall back silently
