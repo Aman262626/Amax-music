@@ -1,9 +1,11 @@
 const USER_KEY = "amax_user";
+const PROFILE_IMAGE_KEY = "amax_profile_image";
 
 export interface UserProfile {
   username: string;
   displayName: string;
   avatar: string;
+  profileImage?: string;
   createdAt: number;
 }
 
@@ -53,6 +55,29 @@ export function logoutUser(): void {
 
 export function getRandomAvatar(): string {
   return AVATARS[Math.floor(Math.random() * AVATARS.length)];
+}
+
+export function getProfileImage(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(PROFILE_IMAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setProfileImage(dataUrl: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(PROFILE_IMAGE_KEY, dataUrl);
+  } catch {
+    // storage full
+  }
+}
+
+export function removeProfileImage(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(PROFILE_IMAGE_KEY);
 }
 
 export { AVATARS };
