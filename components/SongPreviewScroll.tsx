@@ -13,7 +13,7 @@ interface SongPreviewScrollProps {
 }
 
 export default function SongPreviewScroll({ songs, title }: SongPreviewScrollProps) {
-  const { playSong, currentSong, isPlaying } = usePlayer();
+  const { playSong, currentSong, isPlaying, pause } = usePlayer();
   const [previewSongId, setPreviewSongId] = useState<string | null>(null);
   const [previewProgress, setPreviewProgress] = useState(0);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -45,6 +45,12 @@ export default function SongPreviewScroll({ songs, title }: SongPreviewScrollPro
     setPreviewProgress(0);
   }, []);
 
+  useEffect(() => {
+    if (currentSong && previewSongId) {
+      stopPreview();
+    }
+  }, [currentSong, previewSongId, stopPreview]);
+
   const playPreview = useCallback(
     (song: Song) => {
       if (previewSongId === song.id) {
@@ -56,6 +62,10 @@ export default function SongPreviewScroll({ songs, title }: SongPreviewScrollPro
 
       const url = getBestDownloadUrl(song.downloadUrl);
       if (!url) return;
+
+      if (isPlaying) {
+        pause();
+      }
 
       const audio = new Audio(url);
       previewAudioRef.current = audio;
@@ -80,7 +90,7 @@ export default function SongPreviewScroll({ songs, title }: SongPreviewScrollPro
 
       audio.addEventListener("ended", stopPreview);
     },
-    [previewSongId, stopPreview]
+    [previewSongId, stopPreview, isPlaying, pause]
   );
 
   const handleFullPlay = useCallback(

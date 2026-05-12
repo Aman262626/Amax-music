@@ -173,6 +173,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const url = getStreamUrl(song);
       if (!url) return;
 
+      audio.pause();
       setCurrentSong(song);
       setProgress(0);
       setDuration(song.duration || 0);
