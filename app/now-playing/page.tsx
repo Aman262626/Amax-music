@@ -5,6 +5,9 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import SafeImage from "@/components/SafeImage";
 import AudioVisualizer from "@/components/AudioVisualizer";
 import GenreTag from "@/components/GenreTag";
+import LyricsDisplay from "@/components/LyricsDisplay";
+import SongRating from "@/components/SongRating";
+import SpeedControl from "@/components/SpeedControl";
 import { formatDuration, formatCount } from "@/lib/utils";
 import { isFavorite, addFavorite, removeFavorite } from "@/lib/storage";
 import type { Song } from "@/lib/types";
@@ -212,6 +215,26 @@ export default function NowPlayingPage() {
             <button className="flex items-center gap-2 px-4 py-2 glass rounded-full text-sm text-white transition-all hover:bg-white/10">
               <IoCloudDownload className="text-lg" /> Download
             </button>
+          </div>
+
+          {/* Speed Control */}
+          <div className="mb-4">
+            <SpeedControl />
+          </div>
+
+          {/* Song Rating */}
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-white/50 text-sm">Rate:</span>
+            <SongRating songId={currentSong.id} size="md" />
+          </div>
+
+          {/* Lyrics */}
+          <div className="mb-6">
+            <LyricsDisplay
+              songId={currentSong.id}
+              songName={currentSong.name}
+              artist={currentSong.artist}
+            />
           </div>
 
           {/* Queue Info */}

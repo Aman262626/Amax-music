@@ -1,16 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getHistory, getFavorites } from "@/lib/storage";
+import { getHistory, getFavorites, getListeningSeconds } from "@/lib/storage";
 import { IoMusicalNotes, IoHeart, IoTime, IoFlame } from "react-icons/io5";
 
+function formatTime(totalSeconds: number): string {
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMins = minutes % 60;
+  if (hours < 24) return `${hours}h ${remainingMins}m`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
+}
+
 export default function StatsBar() {
-  const [stats, setStats] = useState({ songs: 0, favorites: 0, minutes: 0, streak: 0 });
+  const [stats, setStats] = useState({ songs: 0, favorites: 0, seconds: 0, streak: 0 });
 
   useEffect(() => {
     const history = getHistory();
     const favorites = getFavorites();
-    const totalDuration = history.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const listeningSeconds = getListeningSeconds();
 
     const today = new Date().toDateString();
     const lastPlayed = localStorage.getItem("amax_last_played_date");
@@ -34,16 +45,16 @@ export default function StatsBar() {
     setStats({
       songs: history.length,
       favorites: favorites.length,
-      minutes: Math.floor(totalDuration / 60),
+      seconds: listeningSeconds,
       streak,
     });
   }, []);
 
   const items = [
-    { icon: IoMusicalNotes, label: "Songs Played", value: stats.songs, color: "text-spotify-green" },
-    { icon: IoHeart, label: "Liked", value: stats.favorites, color: "text-accent-pink" },
-    { icon: IoTime, label: "Minutes", value: stats.minutes, color: "text-accent-cyan" },
-    { icon: IoFlame, label: "Day Streak", value: stats.streak, color: "text-accent-orange" },
+    { icon: IoMusicalNotes, label: "Songs Played", value: stats.songs.toString(), color: "text-spotify-green" },
+    { icon: IoHeart, label: "Liked", value: stats.favorites.toString(), color: "text-accent-pink" },
+    { icon: IoTime, label: "Listened", value: formatTime(stats.seconds), color: "text-accent-cyan" },
+    { icon: IoFlame, label: "Day Streak", value: stats.streak.toString(), color: "text-accent-orange" },
   ];
 
   if (stats.songs === 0) return null;

@@ -10,6 +10,7 @@ import PlaylistCard from "@/components/PlaylistCard";
 import VideoPreviewScroll from "@/components/VideoPreviewScroll";
 import type { Song, Album, Artist, Playlist } from "@/lib/types";
 import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch, IoMic } from "react-icons/io5";
+import SearchHistory, { addSearchHistory } from "@/components/SearchHistory";
 
 type TabType = "all" | "songs" | "albums" | "artists" | "playlists";
 
@@ -105,6 +106,7 @@ function SearchContent() {
 
     setLoading(true);
     setSearched(true);
+    addSearchHistory(q);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
@@ -147,6 +149,13 @@ function SearchContent() {
         </h1>
         <SearchInput urlQuery={urlQuery} router={router} />
       </div>
+
+      {/* Search History */}
+      {!searched && (
+        <SearchHistory
+          onSelect={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)}
+        />
+      )}
 
       {/* Browse categories when no search */}
       {!searched && (

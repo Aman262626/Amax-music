@@ -47,7 +47,18 @@ export class AudioEnhancer {
   private audioElement: HTMLAudioElement | null = null;
 
   async init(audio: HTMLAudioElement): Promise<void> {
-    if (this.isInitialized && this.audioElement === audio) return;
+    if (this.isInitialized && this.audioElement === audio) {
+      // Already initialized with same element — just resume context if needed
+      if (this.audioContext?.state === "suspended") {
+        await this.audioContext.resume();
+      }
+      return;
+    }
+
+    // If re-initializing with different element, destroy old context first
+    if (this.isInitialized) {
+      this.destroy();
+    }
 
     try {
       this.audioContext = new AudioContext();

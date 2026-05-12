@@ -5,6 +5,7 @@ const HISTORY_KEY = "amax_history";
 const QUALITY_KEY = "amax_quality";
 const VOLUME_KEY = "amax_volume";
 const THEME_KEY = "amax_theme";
+const LISTENING_TIME_KEY = "amax_listening_seconds";
 const MAX_HISTORY = 100;
 
 function getItem<T>(key: string, fallback: T): T {
@@ -87,4 +88,14 @@ export function getThemeAccent(): ThemeAccent {
 
 export function setThemeAccent(accent: ThemeAccent): void {
   setItem(THEME_KEY, accent);
+}
+
+export function getListeningSeconds(): number {
+  return getItem<number>(LISTENING_TIME_KEY, 0);
+}
+
+export function addListeningSeconds(seconds: number): number {
+  const total = getListeningSeconds() + Math.round(seconds);
+  setItem(LISTENING_TIME_KEY, total);
+  return total;
 }

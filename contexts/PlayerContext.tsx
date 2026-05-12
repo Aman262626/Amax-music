@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import type { Song, RepeatMode } from "@/lib/types";
 import { getBestDownloadUrl, shuffleArray } from "@/lib/utils";
-import { addToHistory, getPreferredQuality } from "@/lib/storage";
+import { addToHistory, getPreferredQuality, addListeningSeconds } from "@/lib/storage";
 import { AudioEnhancer, type AudioMode } from "@/lib/audioEnhancer";
 
 interface PlayerContextType {
@@ -127,6 +127,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Track real listening time (save every 10 seconds while playing)
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      addListeningSeconds(10);
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
   const getStreamUrl = useCallback((song: Song): string => {
     if (!song.downloadUrl || song.downloadUrl.length === 0) return "";
     const preferred = getPreferredQuality();
@@ -152,13 +161,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.load();
       audio.playbackRate = playbackSpeed;
 
-      if (audioMode !== "normal") {
-        if (!enhancerRef.current) {
-          enhancerRef.current = new AudioEnhancer();
-        }
-        await enhancerRef.current.init(audio);
-        enhancerRef.current.applyMode(audioMode);
+      // Initialize enhancer if needed, then apply current mode
+      if (!enhancerRef.current) {
+        enhancerRef.current = new AudioEnhancer();
       }
+      await enhancerRef.current.init(audio);
+      enhancerRef.current.setMode(audioMode);
 
       audio.play().catch(() => {});
       setIsPlaying(true);

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getUser, loginUser, updateUser, logoutUser, AVATARS, getProfileImage, setProfileImage, removeProfileImage } from "@/lib/auth";
-import { getFavorites, getHistory, clearHistory, getPreferredQuality, setPreferredQuality } from "@/lib/storage";
+import { getFavorites, getHistory, clearHistory, getPreferredQuality, setPreferredQuality, getListeningSeconds } from "@/lib/storage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { AUDIO_MODES } from "@/lib/audioEnhancer";
 import type { UserProfile } from "@/lib/auth";
@@ -53,11 +53,11 @@ export default function ProfilePage() {
     if (u) {
       const favs = getFavorites();
       const history = getHistory();
-      const totalDuration = history.reduce((sum, s) => sum + (s.duration || 0), 0);
+      const listeningSeconds = getListeningSeconds();
       setStats({
         favorites: favs.length,
         history: history.length,
-        totalMinutes: Math.floor(totalDuration / 60),
+        totalMinutes: Math.floor(listeningSeconds / 60),
       });
       setRecentSongs(history.slice(0, 5));
       setProfileImg(getProfileImage());

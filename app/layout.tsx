@@ -13,6 +13,7 @@ import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import { ToastProvider } from "@/components/Toast";
 import ScrollToTop from "@/components/ScrollToTop";
 import QuickPlayFAB from "@/components/QuickPlayFAB";
+import OfflineBanner from "@/components/OfflineBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -64,6 +65,7 @@ export default function RootLayout({
           <ToastProvider>
           <PlayerProvider>
             <div className="h-screen flex flex-col overflow-hidden">
+              <OfflineBanner />
               <Suspense fallback={null}>
                 <PartyJoinHandler />
               </Suspense>
