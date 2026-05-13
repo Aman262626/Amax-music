@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import type { Song, RepeatMode } from "@/lib/types";
 import { getBestDownloadUrl, shuffleArray } from "@/lib/utils";
-import { addToHistory, getPreferredQuality, addListeningSeconds } from "@/lib/storage";
+import { addToHistory, getPreferredQuality, addListeningSeconds, getSavedVolume, setSavedVolume } from "@/lib/storage";
 import { AudioEnhancer, type AudioMode } from "@/lib/audioEnhancer";
 
 interface PlayerContextType {
@@ -78,11 +78,34 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [autoPlay, setAutoPlay] = useState(true);
   const [audioMode, setAudioModeState] = useState<AudioMode>("normal");
   const enhancerRef = useRef<AudioEnhancer | null>(null);
+  // Counter to force re-attaching listeners when audio element is recreated
+  const [audioGeneration, setAudioGeneration] = useState(0);
+
+  // Helper to create a fresh audio element (used when recovering from Web Audio capture)
+  const createFreshAudio = useCallback((vol: number, speed: number) => {
+    const oldAudio = audioRef.current;
+    if (oldAudio) {
+      oldAudio.pause();
+      oldAudio.removeAttribute("src");
+      oldAudio.load();
+    }
+    const audio = new Audio();
+    audio.volume = vol;
+    audio.preload = "auto";
+    audio.playbackRate = speed;
+    audioRef.current = audio;
+    setAudioGeneration((g) => g + 1);
+    return audio;
+  }, []);
 
   useEffect(() => {
     if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.volume = 0.8;
+      const audio = new Audio();
+      const savedVol = getSavedVolume();
+      audio.volume = savedVol;
+      audio.preload = "auto";
+      audioRef.current = audio;
+      setVolumeState(savedVol);
     }
     const audio = audioRef.current;
 
@@ -106,6 +129,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     };
     const onWaiting = () => setIsBuffering(true);
     const onCanPlay = () => setIsBuffering(false);
+    const onError = () => {
+      setIsPlaying(false);
+      setIsBuffering(false);
+    };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("durationchange", onDurationChange);
@@ -114,6 +141,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     audio.addEventListener("pause", onPause);
     audio.addEventListener("waiting", onWaiting);
     audio.addEventListener("canplay", onCanPlay);
+    audio.addEventListener("error", onError);
 
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
@@ -123,9 +151,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("error", onError);
     };
+    // Re-run when audio element is recreated
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [audioGeneration]);
 
   // Track real listening time (save every 10 seconds while playing)
   useEffect(() => {
@@ -162,8 +192,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.playbackRate = playbackSpeed;
 
       // Only initialize AudioEnhancer for non-normal modes.
-      // createMediaElementSource captures the audio element into Web Audio API,
-      // and if AudioContext is suspended (common on mobile), no sound plays.
+      // createMediaElementSource permanently captures the audio element into
+      // Web Audio API. If AudioContext suspends (common on mobile), no sound.
       if (audioMode !== "normal") {
         if (!enhancerRef.current) {
           enhancerRef.current = new AudioEnhancer();
@@ -171,12 +201,29 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         await enhancerRef.current.init(audio);
         enhancerRef.current.setMode(audioMode);
       } else if (enhancerRef.current) {
-        // If enhancer was previously active, bypass it
-        enhancerRef.current.setMode("normal");
+        // Fully destroy the enhancer and create a fresh audio element.
+        // Once createMediaElementSource captures an element, it can only
+        // output through AudioContext — even after closing it.
+        enhancerRef.current.destroy();
+        enhancerRef.current = null;
+        const fresh = createFreshAudio(audio.volume, playbackSpeed);
+        fresh.src = url;
+        fresh.load();
       }
 
-      audio.play().catch(() => {});
-      setIsPlaying(true);
+      const playAudio = audioRef.current!;
+      try {
+        await playAudio.play();
+      } catch {
+        // Retry with lower quality on play failure (mobile may reject high bitrate)
+        const fallbackUrl = getBestDownloadUrl(song.downloadUrl);
+        if (fallbackUrl && fallbackUrl !== url) {
+          playAudio.src = fallbackUrl;
+          playAudio.load();
+          try { await playAudio.play(); } catch { /* final fallback failed */ }
+        }
+      }
+      setIsPlaying(!playAudio.paused);
       addToHistory(song);
 
       if ("mediaSession" in navigator) {
@@ -190,7 +237,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [getStreamUrl, playbackSpeed, audioMode]
+    [getStreamUrl, playbackSpeed, audioMode, createFreshAudio]
   );
 
   const fetchSuggestions = useCallback(async (songId: string) => {
@@ -323,6 +370,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (audioRef.current) {
       audioRef.current.volume = vol;
     }
+    setSavedVolume(vol);
   }, []);
 
   const toggleShuffle = useCallback(() => {
@@ -428,7 +476,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     if (mode === "normal") {
       if (enhancerRef.current) {
-        enhancerRef.current.setMode("normal");
+        // Destroy enhancer and recreate audio element to escape Web Audio capture
+        const currentTime = audio.currentTime;
+        const src = audio.src;
+        const wasPlaying = !audio.paused;
+        enhancerRef.current.destroy();
+        enhancerRef.current = null;
+        const fresh = createFreshAudio(audio.volume, audio.playbackRate);
+        if (src) {
+          fresh.src = src;
+          fresh.load();
+          fresh.currentTime = currentTime;
+          if (wasPlaying) {
+            try { await fresh.play(); } catch { /* ignore */ }
+          }
+        }
       }
     } else {
       if (!enhancerRef.current) {
@@ -438,11 +500,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         await enhancerRef.current.init(audio);
         enhancerRef.current.setMode(mode);
       } catch {
-        // If Web Audio API fails, stay in normal mode
         setAudioModeState("normal");
       }
     }
-  }, []);
+  }, [createFreshAudio]);
 
   useEffect(() => {
     if ("mediaSession" in navigator) {

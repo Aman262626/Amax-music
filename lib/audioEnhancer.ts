@@ -345,9 +345,25 @@ export class AudioEnhancer {
 
   destroy(): void {
     this.stopSurroundEffect();
+    try { this.sourceNode?.disconnect(); } catch { /* already disconnected */ }
+    this.sourceNode = null;
     if (this.audioContext) {
       this.audioContext.close().catch(() => {});
     }
+    this.audioContext = null;
+    this.gainNode = null;
+    this.bassFilter = null;
+    this.midFilter = null;
+    this.trebleFilter = null;
+    this.presenceFilter = null;
+    this.subBassFilter = null;
+    this.compressor = null;
+    this.pannerNode = null;
+    this.convolver = null;
+    this.delayLeft = null;
+    this.delayRight = null;
+    this.surroundGain = null;
+    this.boostGainNode = null;
     this.isInitialized = false;
     this.audioElement = null;
   }
