@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import apiManager from "@/lib/apiManager";
 
-const SAAVN_API = "https://saavn.sumit.co/api";
+// Multiple lyrics API sources for failover
+const LYRICS_APIS = [
+  { name: "lrclib", type: "lrclib" },
+  { name: "saavn", type: "saavn" },
+  { name: "lyrics.ovh", type: "ovh" },
+];
 
 export async function GET(request: NextRequest) {
   const songId = request.nextUrl.searchParams.get("id");
   const songName = request.nextUrl.searchParams.get("name");
   const artist = request.nextUrl.searchParams.get("artist");
+  const duration = request.nextUrl.searchParams.get("duration");
 
   if (!songId && !songName) {
     return NextResponse.json({ error: "Missing id or name" }, { status: 400 });
@@ -13,12 +20,10 @@ export async function GET(request: NextRequest) {
 
   const results: { source: string; lyrics: string; language?: string }[] = [];
 
-  // Try JioSaavn lyrics first
-  if (songId) {
+  // Source 1: JioSaavn lyrics via API Manager (failover across 20+ endpoints)
+  if (songId && results.length === 0) {
     try {
-      const res = await fetch(`${SAAVN_API}/songs/${songId}/lyrics`, {
-        next: { revalidate: 86400 },
-      });
+      const res = await apiManager.fetch(`/songs/${songId}/lyrics`);
       if (res.ok) {
         const data = await res.json();
         const lyrics = data.data?.lyrics as string | undefined;
@@ -35,7 +40,64 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Try lyrics.ovh as fallback
+  // Source 2: LRCLIB (free lyrics database with synced + plain lyrics)
+  if (results.length === 0 && songName && artist) {
+    try {
+      const params = new URLSearchParams({
+        track_name: songName,
+        artist_name: artist,
+      });
+      if (duration) params.set("duration", duration);
+
+      const res = await fetch(`https://lrclib.net/api/get?${params}`, {
+        headers: { "User-Agent": "AMAX Music Player v3.0" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const lyrics = (data.plainLyrics || data.syncedLyrics) as string | undefined;
+        if (lyrics && lyrics.trim()) {
+          results.push({
+            source: "lrclib",
+            lyrics: lyrics.trim(),
+            language: detectScript(lyrics),
+          });
+        }
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  // Source 3: LRCLIB search fallback (if exact match failed)
+  if (results.length === 0 && songName) {
+    try {
+      const res = await fetch(
+        `https://lrclib.net/api/search?q=${encodeURIComponent(songName + (artist ? " " + artist : ""))}`,
+        {
+          headers: { "User-Agent": "AMAX Music Player v3.0" },
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const lyrics = (data[0].plainLyrics || data[0].syncedLyrics) as string | undefined;
+          if (lyrics && lyrics.trim()) {
+            results.push({
+              source: "lrclib-search",
+              lyrics: lyrics.trim(),
+              language: detectScript(lyrics),
+            });
+          }
+        }
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  // Source 4: lyrics.ovh
   if (results.length === 0 && songName && artist) {
     try {
       const res = await fetch(
@@ -58,7 +120,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (results.length === 0) {
-    return NextResponse.json({ lyrics: null, sources: [] });
+    return NextResponse.json({ lyrics: null, sources: LYRICS_APIS.map((a) => a.name) });
   }
 
   return NextResponse.json({

@@ -1,30 +1,9 @@
 import type { Song, Album, Playlist, Artist, DownloadUrl } from "./types";
 import { decodeHtml, getBestImage } from "./utils";
+import apiManager from "./apiManager";
 
-const SAAVN_API_URLS = [
-  "https://jiosaavn-apix.arcadopredator.workers.dev/api",
-  "https://saavn.sumit.co/api",
-];
-
-let activeSaavnApi = SAAVN_API_URLS[0];
-
-async function saavnFetch(path: string, init?: RequestInit): Promise<Response> {
-  for (let i = 0; i < SAAVN_API_URLS.length; i++) {
-    const url = `${activeSaavnApi}${path}`;
-    try {
-      const res = await fetch(url, init);
-      if (res.ok) return res;
-      const text = await res.text();
-      if (text.includes("error code") || text.includes("1027")) {
-        activeSaavnApi = SAAVN_API_URLS[(SAAVN_API_URLS.indexOf(activeSaavnApi) + 1) % SAAVN_API_URLS.length];
-        continue;
-      }
-      return new Response(text, { status: res.status, headers: res.headers });
-    } catch {
-      activeSaavnApi = SAAVN_API_URLS[(SAAVN_API_URLS.indexOf(activeSaavnApi) + 1) % SAAVN_API_URLS.length];
-    }
-  }
-  return new Response("{}", { status: 500 });
+async function saavnFetch(path: string, _init?: RequestInit): Promise<Response> {
+  return apiManager.fetch(path, _init);
 }
 
 function mapSong(raw: Record<string, unknown>): Song {
@@ -214,4 +193,8 @@ export async function getTrending(): Promise<{
     searchPlaylists("bollywood", 1, 10),
   ]);
   return { songs, albums, playlists };
+}
+
+export function getApiStatus() {
+  return apiManager.getStatus();
 }

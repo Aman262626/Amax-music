@@ -5,6 +5,7 @@ import SafeImage from "./SafeImage";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { formatDuration, getBestDownloadUrl } from "@/lib/utils";
 import { isFavorite, addFavorite, removeFavorite } from "@/lib/storage";
+import { useToast } from "./Toast";
 import type { Song } from "@/lib/types";
 import {
   IoPlay,
@@ -15,6 +16,7 @@ import {
 import { IoMdHeart, IoMdHeartEmpty } from "react-icons/io";
 import { MdPlaylistAdd } from "react-icons/md";
 import AudioVisualizer from "./AudioVisualizer";
+import GenreTag from "./GenreTag";
 
 interface SongRowProps {
   song: Song;
@@ -30,6 +32,7 @@ export default function SongRow({
   showAlbum = true,
 }: SongRowProps) {
   const { playSong, addToQueue, currentSong, isPlaying } = usePlayer();
+  const { showToast } = useToast();
   const [liked, setLiked] = useState(isFavorite(song.id));
   const [showMenu, setShowMenu] = useState(false);
 
@@ -40,12 +43,14 @@ export default function SongRow({
       e.stopPropagation();
       if (liked) {
         removeFavorite(song.id);
+        showToast("Removed from favorites", "info");
       } else {
         addFavorite(song);
+        showToast("Added to favorites", "success");
       }
       setLiked(!liked);
     },
-    [song, liked]
+    [song, liked, showToast]
   );
 
   const handleDownload = useCallback(
@@ -61,18 +66,20 @@ export default function SongRow({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      showToast("Download started", "success");
       setShowMenu(false);
     },
-    [song]
+    [song, showToast]
   );
 
   const handleAddToQueue = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       addToQueue(song);
+      showToast(`Added "${song.name}" to queue`, "success");
       setShowMenu(false);
     },
-    [song, addToQueue]
+    [song, addToQueue, showToast]
   );
 
   const handleShare = useCallback(
@@ -85,16 +92,17 @@ export default function SongRow({
         }).catch(() => {});
       } else {
         navigator.clipboard.writeText(`${song.name} - ${song.artist}`).catch(() => {});
+        showToast("Copied to clipboard", "info");
       }
       setShowMenu(false);
     },
-    [song]
+    [song, showToast]
   );
 
   return (
     <div
       className={`group flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all hover:bg-white/5 ${
-        isActive ? "bg-white/5" : ""
+        isActive ? "bg-white/5 breathe-glow" : ""
       }`}
       onClick={() => playSong(song, songs, index)}
     >
@@ -125,6 +133,11 @@ export default function SongRow({
           className="object-cover"
           unoptimized
         />
+        {isActive && isPlaying && (
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 bg-spotify-green rounded-full pulse-glow" />
+          </div>
+        )}
       </div>
 
       {/* Info */}
@@ -136,9 +149,14 @@ export default function SongRow({
         >
           {song.name}
         </p>
-        <p className="text-spotify-light-gray text-xs truncate">
-          {song.artist}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-spotify-light-gray text-xs truncate">
+            {song.artist}
+          </p>
+          {song.language && (
+            <GenreTag language={song.language} />
+          )}
+        </div>
       </div>
 
       {/* Album name */}
@@ -173,44 +191,26 @@ export default function SongRow({
           >
             <IoEllipsisHorizontal className="text-lg" />
           </button>
+
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 glass-strong rounded-xl py-1 min-w-[160px] z-20 fade-in shadow-xl">
+            <div className="absolute right-0 top-full mt-1 glass-strong rounded-xl p-1.5 min-w-[160px] z-50 fade-in shadow-xl">
               <button
                 onClick={handleAddToQueue}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-white/5 rounded-lg transition-colors"
               >
-                <MdPlaylistAdd className="text-lg" />
-                Add to Queue
+                <MdPlaylistAdd className="text-lg" /> Add to Queue
               </button>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-white/5 rounded-lg transition-colors"
               >
-                <IoCloudDownload className="text-lg" />
-                Download
+                <IoCloudDownload className="text-lg" /> Download
               </button>
               <button
                 onClick={handleShare}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-white/5 rounded-lg transition-colors"
               >
-                <IoShareSocial className="text-lg" />
-                Share
-              </button>
-              <button
-                onClick={handleLike}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/5 transition-colors"
-              >
-                {liked ? (
-                  <>
-                    <IoMdHeart className="text-accent-pink text-lg" />
-                    Unlike
-                  </>
-                ) : (
-                  <>
-                    <IoMdHeartEmpty className="text-lg" />
-                    Like
-                  </>
-                )}
+                <IoShareSocial className="text-lg" /> Share
               </button>
             </div>
           )}

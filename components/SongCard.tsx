@@ -5,6 +5,8 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import type { Song } from "@/lib/types";
 import { IoPlay } from "react-icons/io5";
 import AudioVisualizer from "./AudioVisualizer";
+import GenreTag from "./GenreTag";
+import { formatDuration, formatCount } from "@/lib/utils";
 
 interface SongCardProps {
   song: Song;
@@ -44,13 +46,32 @@ export default function SongCard({ song, songs }: SongCardProps) {
             <div className="w-2 h-2 bg-spotify-green rounded-full pulse-glow" />
           </div>
         )}
+        {/* Duration badge */}
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-medium backdrop-blur-sm">
+            {formatDuration(song.duration)}
+          </span>
+        </div>
+        {/* Genre tag */}
+        {song.language && (
+          <div className="absolute top-2 left-2">
+            <GenreTag language={song.language} />
+          </div>
+        )}
       </div>
       <p className={`text-sm font-medium truncate ${isActive ? "gradient-text-holo" : "text-white"}`}>
         {song.name}
       </p>
-      <p className="text-spotify-light-gray text-xs truncate mt-0.5">
-        {song.artist}
-      </p>
+      <div className="flex items-center justify-between mt-0.5">
+        <p className="text-spotify-light-gray text-xs truncate flex-1">
+          {song.artist}
+        </p>
+        {song.playCount && (
+          <span className="text-spotify-light-gray/60 text-[10px] ml-1 flex-shrink-0">
+            {formatCount(song.playCount)} plays
+          </span>
+        )}
+      </div>
     </button>
   );
 }

@@ -32,6 +32,8 @@ import AudioVisualizer from "./AudioVisualizer";
 import VideoPlayer from "./VideoPlayer";
 import PartyMode from "./PartyMode";
 import AudioModeSelector from "./AudioModeSelector";
+import MarqueeText from "./MarqueeText";
+import { useToast } from "./Toast";
 
 export default function Player() {
   const {
@@ -62,6 +64,7 @@ export default function Player() {
   const [showLyrics, setShowLyrics] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
+  const { showToast } = useToast();
   const progressRef = useRef<HTMLDivElement>(null);
   const volumeRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +116,8 @@ export default function Player() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [currentSong]);
+    showToast("Download started", "success");
+  }, [currentSong, showToast]);
 
   const handleShare = useCallback(() => {
     if (!currentSong) return;
@@ -508,12 +512,18 @@ export default function Player() {
               <div className="w-full max-w-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div className="min-w-0 flex-1 mr-4">
-                    <p className="text-white text-xl font-bold truncate">
-                      {currentSong.name}
-                    </p>
+                    <MarqueeText
+                      text={currentSong.name}
+                      className="text-white text-xl font-bold"
+                    />
                     <p className="text-spotify-light-gray text-sm truncate">
                       {currentSong.artist}
                     </p>
+                    {currentSong.album && (
+                      <p className="text-spotify-light-gray/60 text-xs truncate mt-0.5">
+                        {currentSong.album}
+                      </p>
+                    )}
                   </div>
                   <button onClick={handleLike} className="hover:scale-110 transition-transform">
                     {liked ? (
