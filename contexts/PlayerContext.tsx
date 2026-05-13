@@ -161,12 +161,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.load();
       audio.playbackRate = playbackSpeed;
 
-      // Initialize enhancer if needed, then apply current mode
-      if (!enhancerRef.current) {
-        enhancerRef.current = new AudioEnhancer();
+      // Only initialize AudioEnhancer for non-normal modes.
+      // createMediaElementSource captures the audio element into Web Audio API,
+      // and if AudioContext is suspended (common on mobile), no sound plays.
+      if (audioMode !== "normal") {
+        if (!enhancerRef.current) {
+          enhancerRef.current = new AudioEnhancer();
+        }
+        await enhancerRef.current.init(audio);
+        enhancerRef.current.setMode(audioMode);
+      } else if (enhancerRef.current) {
+        // If enhancer was previously active, bypass it
+        enhancerRef.current.setMode("normal");
       }
-      await enhancerRef.current.init(audio);
-      enhancerRef.current.setMode(audioMode);
 
       audio.play().catch(() => {});
       setIsPlaying(true);
@@ -417,16 +424,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const setAudioMode = useCallback(async (mode: AudioMode) => {
     setAudioModeState(mode);
     const audio = audioRef.current;
+    if (!audio) return;
+
     if (mode === "normal") {
       if (enhancerRef.current) {
-        enhancerRef.current.setMode(mode);
+        enhancerRef.current.setMode("normal");
       }
-    } else if (audio) {
+    } else {
       if (!enhancerRef.current) {
         enhancerRef.current = new AudioEnhancer();
       }
-      await enhancerRef.current.init(audio);
-      enhancerRef.current.setMode(mode);
+      try {
+        await enhancerRef.current.init(audio);
+        enhancerRef.current.setMode(mode);
+      } catch {
+        // If Web Audio API fails, stay in normal mode
+        setAudioModeState("normal");
+      }
     }
   }, []);
 
