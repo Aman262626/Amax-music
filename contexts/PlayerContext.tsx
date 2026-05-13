@@ -168,6 +168,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const getStreamUrl = useCallback((song: Song): string => {
     if (!song.downloadUrl || song.downloadUrl.length === 0) return "";
+    // Always try highest quality first (320kbps), then fall back to user preference
+    const highest = song.downloadUrl.find((u) => u.quality === "320kbps");
+    if (highest) return highest.url;
     const preferred = getPreferredQuality();
     const found = song.downloadUrl.find((u) => u.quality === preferred);
     if (found) return found.url;

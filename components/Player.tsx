@@ -56,6 +56,7 @@ export default function Player() {
     toggleRepeat,
     setPlaybackSpeed,
     setSleepTimer,
+    audioMode,
   } = usePlayer();
 
   const [liked, setLiked] = useState(false);
@@ -594,8 +595,13 @@ export default function Player() {
                         </span>
                       )}
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full glass text-spotify-light-gray">
-                        320kbps
+                        {currentSong.downloadUrl?.find(u => u.quality === "320kbps") ? "320kbps" : currentSong.downloadUrl?.[currentSong.downloadUrl.length - 1]?.quality || "HQ"}
                       </span>
+                      {(audioMode === "ultra_hd" || audioMode === "crystal_clear") && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-spotify-green/20 text-spotify-green font-semibold">
+                          HD
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button onClick={handleLike} className="hover:scale-110 transition-transform">

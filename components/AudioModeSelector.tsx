@@ -99,6 +99,7 @@ function ModeCard({
 }) {
   const gradients: Record<AudioMode, string> = {
     normal: "from-gray-600 to-gray-800",
+    ultra_hd: "from-yellow-400 to-amber-600",
     crystal_clear: "from-cyan-500 to-blue-600",
     "3d_surround": "from-purple-500 to-indigo-600",
     volume_boost: "from-red-500 to-orange-600",
