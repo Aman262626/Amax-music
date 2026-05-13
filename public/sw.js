@@ -1,4 +1,4 @@
-const CACHE_NAME = "amax-music-v4";
+const CACHE_NAME = "amax-music-v5";
 const STATIC_ASSETS = [
   "/",
   "/search",
