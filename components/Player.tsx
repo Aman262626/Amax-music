@@ -67,6 +67,7 @@ export default function Player() {
   const { showToast } = useToast();
   const progressRef = useRef<HTMLDivElement>(null);
   const volumeRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (currentSong) {
@@ -133,6 +134,28 @@ export default function Player() {
       ).catch(() => {});
     }
   }, [currentSong]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    if (absDx > 60 && absDx > absDy * 1.5) {
+      if (dx > 0) {
+        previous();
+        showToast("Previous track", "info");
+      } else {
+        next();
+        showToast("Next track", "info");
+      }
+    }
+    touchStartRef.current = null;
+  }, [next, previous, showToast]);
 
   const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
   const timerOptions = [
@@ -377,12 +400,14 @@ export default function Player() {
         </div>
       </div>
 
-      {/* Mobile Mini Player */}
+      {/* Mobile Mini Player - swipe left/right to skip tracks */}
       {!showMobilePlayer && (
         <div
           className="lg:hidden fixed left-2 right-2 z-30 glass-strong rounded-xl overflow-hidden cursor-pointer"
           style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
           onClick={() => setShowMobilePlayer(true)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           <div
             className="h-[2px] progress-gradient"

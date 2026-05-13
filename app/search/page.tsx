@@ -9,14 +9,16 @@ import ArtistCard from "@/components/ArtistCard";
 import PlaylistCard from "@/components/PlaylistCard";
 import VideoPreviewScroll from "@/components/VideoPreviewScroll";
 import type { Song, Album, Artist, Playlist } from "@/lib/types";
-import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch, IoMic } from "react-icons/io5";
+import { IoMusicalNotes, IoDisc, IoPerson, IoList, IoSearch, IoMic, IoMicOff } from "react-icons/io5";
+import { MdLyrics } from "react-icons/md";
 import SearchHistory, { addSearchHistory } from "@/components/SearchHistory";
 
-type TabType = "all" | "songs" | "albums" | "artists" | "playlists";
+type TabType = "all" | "songs" | "albums" | "artists" | "playlists" | "lyrics";
 
 const TABS: { key: TabType; label: string; icon: React.ElementType }[] = [
   { key: "all", label: "All", icon: IoMusicalNotes },
   { key: "songs", label: "Songs", icon: IoMusicalNotes },
+  { key: "lyrics", label: "Lyrics", icon: MdLyrics },
   { key: "albums", label: "Albums", icon: IoDisc },
   { key: "artists", label: "Artists", icon: IoPerson },
   { key: "playlists", label: "Playlists", icon: IoList },
@@ -39,7 +41,9 @@ const BROWSE_CATEGORIES = [
 
 function SearchInput({ urlQuery, router }: { urlQuery: string; router: ReturnType<typeof useRouter> }) {
   const [inputValue, setInputValue] = useState(urlQuery);
+  const [isListening, setIsListening] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     setInputValue(urlQuery);
@@ -58,6 +62,40 @@ function SearchInput({ urlQuery, router }: { urlQuery: string; router: ReturnTyp
     [router]
   );
 
+  const toggleVoiceSearch = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "hi-IN";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join("");
+      setInputValue(transcript);
+      if (event.results[0].isFinal) {
+        router.push(`/search?q=${encodeURIComponent(transcript.trim())}`);
+        setIsListening(false);
+      }
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
+    setIsListening(true);
+  }, [isListening, router]);
+
   return (
     <div className="relative max-w-lg w-full">
       <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-spotify-light-gray text-lg" />
@@ -65,19 +103,25 @@ function SearchInput({ urlQuery, router }: { urlQuery: string; router: ReturnTyp
         type="text"
         value={inputValue}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="Search songs, albums, artists..."
+        placeholder="Search songs, lyrics, albums, artists..."
         className="w-full pl-10 pr-12 py-3 glass rounded-xl text-white text-sm placeholder-spotify-light-gray focus:outline-none focus:ring-2 focus:ring-spotify-green/30 focus:bg-white/[0.07] transition-all"
         autoFocus
       />
       {inputValue && (
         <button
-          onClick={() => handleChange("")}
+          onClick={() => { handleChange(""); router.push("/search"); }}
           className="absolute right-10 top-1/2 -translate-y-1/2 text-spotify-light-gray hover:text-white text-sm"
         >
           &times;
         </button>
       )}
-      <IoMic className="absolute right-3 top-1/2 -translate-y-1/2 text-spotify-light-gray hover:text-spotify-green cursor-pointer transition-colors" />
+      <button onClick={toggleVoiceSearch} className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors">
+        {isListening ? (
+          <IoMicOff className="text-red-500 animate-pulse" />
+        ) : (
+          <IoMic className="text-spotify-light-gray hover:text-spotify-green cursor-pointer" />
+        )}
+      </button>
     </div>
   );
 }
@@ -94,12 +138,15 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const doSearch = useCallback(async (q: string) => {
+  const [lyricsSongs, setLyricsSongs] = useState<Song[]>([]);
+
+  const doSearch = useCallback(async (q: string, searchTab?: TabType) => {
     if (!q.trim()) {
       setSongs([]);
       setAlbums([]);
       setArtists([]);
       setPlaylists([]);
+      setLyricsSongs([]);
       setSearched(false);
       return;
     }
@@ -108,18 +155,25 @@ function SearchContent() {
     setSearched(true);
     addSearchHistory(q);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setSongs(data.songs || []);
-      setAlbums(data.albums || []);
-      setArtists(data.artists || []);
-      setPlaylists(data.playlists || []);
+      const activeTab = searchTab || tab;
+      if (activeTab === "lyrics") {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=lyrics`);
+        const data = await res.json();
+        setLyricsSongs(data.songs || []);
+      } else {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        setSongs(data.songs || []);
+        setAlbums(data.albums || []);
+        setArtists(data.artists || []);
+        setPlaylists(data.playlists || []);
+      }
     } catch {
       // silently fail
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tab]);
 
   useEffect(() => {
     if (urlQuery) {
@@ -134,11 +188,19 @@ function SearchContent() {
     [router]
   );
 
+  const handleTabChange = useCallback((newTab: TabType) => {
+    setTab(newTab);
+    if (newTab === "lyrics" && urlQuery && lyricsSongs.length === 0) {
+      doSearch(urlQuery, "lyrics");
+    }
+  }, [urlQuery, lyricsSongs.length, doSearch]);
+
   const hasResults =
     songs.length > 0 ||
     albums.length > 0 ||
     artists.length > 0 ||
-    playlists.length > 0;
+    playlists.length > 0 ||
+    lyricsSongs.length > 0;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -188,7 +250,7 @@ function SearchContent() {
             {TABS.map((t) => (
               <button
                 key={t.key}
-                onClick={() => setTab(t.key)}
+                onClick={() => handleTabChange(t.key)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   tab === t.key
                     ? "bg-white text-black"
@@ -278,6 +340,31 @@ function SearchContent() {
                     ))}
                   </div>
                 </section>
+              )}
+
+              {/* Lyrics search results */}
+              {tab === "lyrics" && lyricsSongs.length > 0 && (
+                <section className="mb-8">
+                  <h2 className="text-xl font-bold text-white mb-1">Lyrics Results</h2>
+                  <p className="text-spotify-light-gray text-xs mb-3">Songs matching lyrics: &ldquo;{urlQuery}&rdquo;</p>
+                  <div>
+                    {lyricsSongs.map((song, i) => (
+                      <SongRow key={song.id} song={song} index={i} songs={lyricsSongs} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {tab === "lyrics" && lyricsSongs.length === 0 && !loading && (
+                <div className="text-center py-20">
+                  <p className="text-4xl mb-4">🎤</p>
+                  <p className="text-white text-lg font-semibold mb-2">
+                    No lyrics match for &ldquo;{urlQuery}&rdquo;
+                  </p>
+                  <p className="text-spotify-light-gray text-sm">
+                    Try typing a line from the song you&apos;re looking for.
+                  </p>
+                </div>
               )}
 
               {/* Video Previews for search results */}
