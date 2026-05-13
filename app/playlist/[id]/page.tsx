@@ -6,7 +6,7 @@ import SongRow from "@/components/SongRow";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Playlist } from "@/lib/types";
 import { IoPlay, IoShuffle, IoCloudDownload } from "react-icons/io5";
-import { formatCount, getBestDownloadUrl } from "@/lib/utils";
+import { formatCount, getBestDownloadUrl, formatDuration } from "@/lib/utils";
 
 export default function PlaylistPage({
   params,
@@ -121,6 +121,11 @@ export default function PlaylistPage({
                 <span>
                   • {playlist.songCount} song
                   {playlist.songCount > 1 ? "s" : ""}
+                </span>
+              )}
+              {playlist.songs && playlist.songs.length > 0 && (
+                <span>
+                  • {formatDuration(playlist.songs.reduce((sum, s) => sum + (s.duration || 0), 0))}
                 </span>
               )}
             </div>

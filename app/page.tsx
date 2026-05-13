@@ -12,7 +12,7 @@ import { SongCardSkeleton } from "@/components/Skeleton";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { getHistory, getFavorites } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
-import { IoMusicalNotes, IoHappy, IoSad, IoFlame, IoMoon, IoCafe, IoFitness } from "react-icons/io5";
+import { IoMusicalNotes, IoHappy, IoSad, IoFlame, IoMoon, IoCafe, IoFitness, IoPlay, IoShuffle } from "react-icons/io5";
 
 const MOODS = [
   { label: "Happy", icon: IoHappy, query: "happy upbeat bollywood songs", color: "from-yellow-400 to-orange-500" },
@@ -237,9 +237,30 @@ export default function HomePage() {
       {/* Recently Played */}
       {recentlyPlayed.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg sm:text-xl font-bold text-white mb-3">
-            Recently Played
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-white">
+              Recently Played
+            </h2>
+            {recentlyPlayed.length > 1 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => playQueue(recentlyPlayed, 0)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-spotify-green/20 text-spotify-green text-xs font-medium hover:bg-spotify-green/30 transition-colors"
+                >
+                  <IoPlay className="text-sm" /> Play All
+                </button>
+                <button
+                  onClick={() => {
+                    const shuffled = [...recentlyPlayed].sort(() => Math.random() - 0.5);
+                    playQueue(shuffled, 0);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass text-white text-xs font-medium hover:bg-white/10 transition-colors"
+                >
+                  <IoShuffle className="text-sm" /> Shuffle
+                </button>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
             {recentlyPlayed.map((song, i) => (
               <SongRow key={`recent-${song.id}-${i}`} song={song} index={i} songs={recentlyPlayed} showAlbum={false} />

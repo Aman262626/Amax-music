@@ -6,7 +6,7 @@ import SongRow from "@/components/SongRow";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { Album } from "@/lib/types";
 import { IoPlay, IoShuffle, IoCloudDownload } from "react-icons/io5";
-import { getBestDownloadUrl } from "@/lib/utils";
+import { getBestDownloadUrl, formatDuration } from "@/lib/utils";
 
 export default function AlbumPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -108,6 +108,11 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
               {album.songCount && (
                 <span>
                   • {album.songCount} song{album.songCount > 1 ? "s" : ""}
+                </span>
+              )}
+              {album.songs && album.songs.length > 0 && (
+                <span>
+                  • {formatDuration(album.songs.reduce((sum, s) => sum + (s.duration || 0), 0))}
                 </span>
               )}
             </div>

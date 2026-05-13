@@ -64,6 +64,7 @@ export default function Player() {
   const [showLyrics, setShowLyrics] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
+  const [showRemaining, setShowRemaining] = useState(false);
   const { showToast } = useToast();
   const progressRef = useRef<HTMLDivElement>(null);
   const volumeRef = useRef<HTMLDivElement>(null);
@@ -156,6 +157,21 @@ export default function Player() {
     }
     touchStartRef.current = null;
   }, [next, previous, showToast]);
+
+  // Volume gesture for mobile full player (swipe up/down on album art)
+  const volumeTouchRef = useRef<{ y: number; vol: number } | null>(null);
+  const handleVolumeTouchStart = useCallback((e: React.TouchEvent) => {
+    volumeTouchRef.current = { y: e.touches[0].clientY, vol: volume };
+  }, [volume]);
+  const handleVolumeTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!volumeTouchRef.current) return;
+    const dy = volumeTouchRef.current.y - e.touches[0].clientY;
+    const newVol = Math.max(0, Math.min(1, volumeTouchRef.current.vol + dy / 200));
+    setVolume(newVol);
+  }, [setVolume]);
+  const handleVolumeTouchEnd = useCallback(() => {
+    volumeTouchRef.current = null;
+  }, []);
 
   const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
   const timerOptions = [
@@ -278,9 +294,12 @@ export default function Player() {
                 <div className="hidden group-hover:block absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg glow-green" />
               </div>
             </div>
-            <span className="text-spotify-light-gray text-xs min-w-[35px]">
-              {formatDuration(duration)}
-            </span>
+            <button
+              onClick={() => setShowRemaining(!showRemaining)}
+              className="text-spotify-light-gray text-xs min-w-[35px] hover:text-white transition-colors"
+            >
+              {showRemaining ? `-${formatDuration(Math.max(0, duration - progress))}` : formatDuration(duration)}
+            </button>
           </div>
         </div>
 
@@ -454,13 +473,22 @@ export default function Player() {
                 e.stopPropagation();
                 togglePlay();
               }}
-              className="p-2"
+              className="p-1.5"
             >
               {isPlaying ? (
                 <IoPauseCircle className="text-white text-3xl" />
               ) : (
                 <IoPlayCircle className="text-white text-3xl" />
               )}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                next();
+              }}
+              className="p-1.5"
+            >
+              <IoPlaySkipForward className="text-white text-lg" />
             </button>
           </div>
         </div>
@@ -514,7 +542,12 @@ export default function Player() {
                     <div className="absolute -inset-8 rounded-3xl holo-border opacity-30" style={{ animationDelay: '1.5s' }} />
                   </>
                 )}
-                <div className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl album-art-3d ${isPlaying ? 'glow-green' : ''}`}>
+                <div
+                  className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl album-art-3d ${isPlaying ? 'glow-green' : ''}`}
+                  onTouchStart={handleVolumeTouchStart}
+                  onTouchMove={handleVolumeTouchMove}
+                  onTouchEnd={handleVolumeTouchEnd}
+                >
                   <SafeImage
                     src={currentSong.imageHigh || currentSong.image}
                     alt={currentSong.name}
@@ -549,6 +582,21 @@ export default function Player() {
                         {currentSong.album}
                       </p>
                     )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {currentSong.year && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full glass text-spotify-light-gray">
+                          {currentSong.year}
+                        </span>
+                      )}
+                      {currentSong.language && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full glass text-spotify-light-gray capitalize">
+                          {currentSong.language}
+                        </span>
+                      )}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full glass text-spotify-light-gray">
+                        320kbps
+                      </span>
+                    </div>
                   </div>
                   <button onClick={handleLike} className="hover:scale-110 transition-transform">
                     {liked ? (
@@ -577,9 +625,12 @@ export default function Player() {
                     <span className="text-spotify-light-gray text-xs">
                       {formatDuration(progress)}
                     </span>
-                    <span className="text-spotify-light-gray text-xs">
-                      {formatDuration(duration)}
-                    </span>
+                    <button
+                      onClick={() => setShowRemaining(!showRemaining)}
+                      className="text-spotify-light-gray text-xs"
+                    >
+                      {showRemaining ? `-${formatDuration(Math.max(0, duration - progress))}` : formatDuration(duration)}
+                    </button>
                   </div>
                 </div>
 
@@ -657,6 +708,18 @@ export default function Player() {
                   >
                     <MdQueueMusic className="text-xl" />
                     <span className="text-[10px]">Queue</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const idx = speedOptions.indexOf(playbackSpeed);
+                      const nextSpeed = speedOptions[(idx + 1) % speedOptions.length];
+                      setPlaybackSpeed(nextSpeed);
+                      showToast(`Speed: ${nextSpeed}x`, "info");
+                    }}
+                    className={`flex flex-col items-center gap-1 transition-colors ${playbackSpeed !== 1 ? 'text-spotify-green' : 'text-spotify-light-gray hover:text-white'}`}
+                  >
+                    <IoSpeedometer className="text-xl" />
+                    <span className="text-[10px]">{playbackSpeed}x</span>
                   </button>
                   <button
                     onClick={() => setShowTimerMenu(!showTimerMenu)}
