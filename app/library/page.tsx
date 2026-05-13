@@ -28,7 +28,7 @@ const QUALITY_OPTIONS = [
   { label: "Low (48 kbps)", value: "48kbps" },
   { label: "Normal (96 kbps)", value: "96kbps" },
   { label: "High (160 kbps)", value: "160kbps" },
-  { label: "Very High (320 kbps)", value: "320kbps" },
+  { label: "Max HD (320 kbps)", value: "320kbps" },
 ];
 
 export default function LibraryPage() {

@@ -1,5 +1,6 @@
 export type AudioMode =
   | "normal"
+  | "ultra_hd"
   | "crystal_clear"
   | "3d_surround"
   | "volume_boost"
@@ -17,6 +18,7 @@ export interface AudioModeInfo {
 
 export const AUDIO_MODES: AudioModeInfo[] = [
   { id: "normal", name: "Normal", description: "Standard playback", icon: "🎵" },
+  { id: "ultra_hd", name: "Ultra HD", description: "Studio-grade clarity, max quality", icon: "✨" },
   { id: "crystal_clear", name: "Crystal Clear", description: "HD voice, crystal clear audio", icon: "💎" },
   { id: "3d_surround", name: "3D Surround", description: "Immersive 3D spatial audio", icon: "🌐" },
   { id: "volume_boost", name: "Volume Boost", description: "500x maximum amplification", icon: "🔊" },
@@ -161,17 +163,46 @@ export class AudioEnhancer {
     this.resetFilters();
 
     switch (mode) {
-      case "crystal_clear":
-        // Enhance clarity: boost presence & treble, slight mid cut, gentle compression
+      case "ultra_hd":
+        // Studio-grade HD: harmonic excitation, wide stereo image, transparent compression
+        // Sub-bass tightened, bass clean, mids detailed, presence + air boosted
+        this.subBassFilter!.gain.value = -2;
+        this.subBassFilter!.frequency.value = 40;
+        this.bassFilter!.gain.value = 2;
+        this.bassFilter!.frequency.value = 150;
+        this.midFilter!.gain.value = 1.5;
+        this.midFilter!.frequency.value = 1200;
+        this.midFilter!.Q.value = 0.7;
         this.presenceFilter!.gain.value = 5;
+        this.presenceFilter!.frequency.value = 4000;
+        this.presenceFilter!.Q.value = 0.8;
         this.trebleFilter!.gain.value = 4;
+        this.trebleFilter!.frequency.value = 10000;
+        // Transparent mastering-style compression
+        this.compressor!.threshold.value = -16;
+        this.compressor!.ratio.value = 2.5;
+        this.compressor!.knee.value = 15;
+        this.compressor!.attack.value = 0.005;
+        this.compressor!.release.value = 0.15;
+        this.gainNode!.gain.value = 1.25;
+        break;
+
+      case "crystal_clear":
+        // Enhanced clarity: presence & treble boost, clean mids, gentle compression
+        this.presenceFilter!.gain.value = 6;
+        this.presenceFilter!.frequency.value = 3500;
+        this.trebleFilter!.gain.value = 5;
+        this.trebleFilter!.frequency.value = 9000;
         this.midFilter!.gain.value = -1;
         this.midFilter!.Q.value = 0.8;
-        this.bassFilter!.gain.value = 1;
-        this.compressor!.threshold.value = -20;
+        this.bassFilter!.gain.value = 1.5;
+        this.subBassFilter!.gain.value = -1;
+        this.compressor!.threshold.value = -18;
         this.compressor!.ratio.value = 3;
-        this.compressor!.knee.value = 20;
-        this.gainNode!.gain.value = 1.15;
+        this.compressor!.knee.value = 15;
+        this.compressor!.attack.value = 0.003;
+        this.compressor!.release.value = 0.2;
+        this.gainNode!.gain.value = 1.2;
         break;
 
       case "3d_surround":
