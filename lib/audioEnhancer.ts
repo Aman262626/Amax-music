@@ -28,6 +28,10 @@ export const AUDIO_MODES: AudioModeInfo[] = [
   { id: "night_mode", name: "Night Mode", description: "Soft, balanced for low volume", icon: "🌙" },
 ];
 
+// Singleton audio enhancer — initialized ONCE, never destroyed.
+// Uses Web Audio API to route audio through EQ filters + compressor.
+// On mobile, AudioContext is kept alive via auto-resume on suspend
+// and global touch/click listeners.
 export class AudioEnhancer {
   private audioContext: AudioContext | null = null;
   private sourceNode: MediaElementAudioSourceNode | null = null;
@@ -39,75 +43,54 @@ export class AudioEnhancer {
   private subBassFilter: BiquadFilterNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
   private pannerNode: StereoPannerNode | null = null;
-  private convolver: ConvolverNode | null = null;
-  private delayLeft: DelayNode | null = null;
-  private delayRight: DelayNode | null = null;
-  private surroundGain: GainNode | null = null;
   private boostGainNode: GainNode | null = null;
   private currentMode: AudioMode = "normal";
   private isInitialized = false;
   private audioElement: HTMLAudioElement | null = null;
+  private surroundAnimationId: number | null = null;
 
-  async init(audio: HTMLAudioElement): Promise<void> {
+  // Initialize SYNCHRONOUSLY — must be called within a user gesture
+  // (tap/click handler) so AudioContext is allowed to run on mobile.
+  // Call this ONCE per audio element. Do NOT call repeatedly.
+  init(audio: HTMLAudioElement): boolean {
+    // Already initialized with same element — just resume
     if (this.isInitialized && this.audioElement === audio) {
-      // Already initialized with same element — just resume context if needed
-      if (this.audioContext?.state === "suspended") {
-        this.audioContext.resume().catch(() => {});
-      }
-      return;
+      this.resumeContext();
+      return true;
     }
 
-    // If re-initializing with different element, destroy old context first
+    // Different element — must create new context
     if (this.isInitialized) {
-      this.destroy();
+      this.cleanup();
     }
 
     try {
       this.audioContext = new AudioContext();
       this.audioElement = audio;
 
-      // Auto-resume AudioContext whenever it suspends (mobile browsers
-      // aggressively suspend AudioContext to save battery)
+      // Auto-resume when mobile browser suspends AudioContext
       this.audioContext.onstatechange = () => {
         if (this.audioContext?.state === "suspended") {
           this.audioContext.resume().catch(() => {});
         }
       };
 
-      // Resume immediately — don't await to preserve user gesture context
+      // Resume immediately (synchronous call — no await)
       if (this.audioContext.state === "suspended") {
         this.audioContext.resume().catch(() => {});
       }
 
+      // Capture audio element into Web Audio graph
       this.sourceNode = this.audioContext.createMediaElementSource(audio);
 
-      this.subBassFilter = this.audioContext.createBiquadFilter();
-      this.subBassFilter.type = "lowshelf";
-      this.subBassFilter.frequency.value = 60;
-      this.subBassFilter.gain.value = 0;
+      // Create EQ filter chain
+      this.subBassFilter = this.createFilter("lowshelf", 60);
+      this.bassFilter = this.createFilter("lowshelf", 200);
+      this.midFilter = this.createFilter("peaking", 1000);
+      this.presenceFilter = this.createFilter("peaking", 3500);
+      this.trebleFilter = this.createFilter("highshelf", 8000);
 
-      this.bassFilter = this.audioContext.createBiquadFilter();
-      this.bassFilter.type = "lowshelf";
-      this.bassFilter.frequency.value = 200;
-      this.bassFilter.gain.value = 0;
-
-      this.midFilter = this.audioContext.createBiquadFilter();
-      this.midFilter.type = "peaking";
-      this.midFilter.frequency.value = 1000;
-      this.midFilter.Q.value = 1;
-      this.midFilter.gain.value = 0;
-
-      this.presenceFilter = this.audioContext.createBiquadFilter();
-      this.presenceFilter.type = "peaking";
-      this.presenceFilter.frequency.value = 3500;
-      this.presenceFilter.Q.value = 1;
-      this.presenceFilter.gain.value = 0;
-
-      this.trebleFilter = this.audioContext.createBiquadFilter();
-      this.trebleFilter.type = "highshelf";
-      this.trebleFilter.frequency.value = 8000;
-      this.trebleFilter.gain.value = 0;
-
+      // Dynamics compressor
       this.compressor = this.audioContext.createDynamicsCompressor();
       this.compressor.threshold.value = -24;
       this.compressor.knee.value = 30;
@@ -115,44 +98,84 @@ export class AudioEnhancer {
       this.compressor.attack.value = 0.003;
       this.compressor.release.value = 0.25;
 
+      // Gain nodes
       this.gainNode = this.audioContext.createGain();
-      this.gainNode.gain.value = 1;
-
-      this.pannerNode = this.audioContext.createStereoPanner();
-      this.pannerNode.pan.value = 0;
-
-      this.delayLeft = this.audioContext.createDelay(0.05);
-      this.delayLeft.delayTime.value = 0;
-
-      this.delayRight = this.audioContext.createDelay(0.05);
-      this.delayRight.delayTime.value = 0;
-
-      this.surroundGain = this.audioContext.createGain();
-      this.surroundGain.gain.value = 0;
-
       this.boostGainNode = this.audioContext.createGain();
-      this.boostGainNode.gain.value = 1;
+      this.pannerNode = this.audioContext.createStereoPanner();
 
-      // Start in bypass — connect source directly to output
-      // applyMode will reconnect through the filter chain if needed
+      // Connect source → destination (bypass mode initially)
       this.sourceNode.connect(this.audioContext.destination);
 
       this.isInitialized = true;
-      this.applyMode(this.currentMode);
+      return true;
     } catch {
-      // Web Audio API not supported, fall back silently
       this.isInitialized = false;
+      return false;
     }
+  }
+
+  private createFilter(type: BiquadFilterType, freq: number): BiquadFilterNode {
+    const filter = this.audioContext!.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.value = freq;
+    filter.gain.value = 0;
+    if (type === "peaking") filter.Q.value = 1;
+    return filter;
+  }
+
+  // Switch audio mode — just changes filter values, no element recreation
+  setMode(mode: AudioMode): void {
+    if (mode !== "3d_surround") {
+      this.stopSurroundEffect();
+    }
+    this.resumeContext();
+
+    if (mode === "normal") {
+      this.bypass();
+    } else {
+      this.unbypass();
+      this.applyMode(mode);
+    }
+  }
+
+  private bypass(): void {
+    if (!this.isInitialized || !this.sourceNode || !this.audioContext) return;
+    this.currentMode = "normal";
+    this.sourceNode.disconnect();
+    this.sourceNode.connect(this.audioContext.destination);
+  }
+
+  private unbypass(): void {
+    if (!this.isInitialized || !this.sourceNode || !this.subBassFilter ||
+        !this.pannerNode || !this.audioContext) return;
+    this.sourceNode.disconnect();
+    this.sourceNode
+      .connect(this.subBassFilter)
+      .connect(this.bassFilter!)
+      .connect(this.midFilter!)
+      .connect(this.presenceFilter!)
+      .connect(this.trebleFilter!)
+      .connect(this.gainNode!)
+      .connect(this.compressor!)
+      .connect(this.boostGainNode!)
+      .connect(this.pannerNode)
+      .connect(this.audioContext.destination);
   }
 
   private resetFilters(): void {
     if (!this.isInitialized) return;
-
     this.subBassFilter!.gain.value = 0;
+    this.subBassFilter!.frequency.value = 60;
     this.bassFilter!.gain.value = 0;
+    this.bassFilter!.frequency.value = 200;
     this.midFilter!.gain.value = 0;
+    this.midFilter!.frequency.value = 1000;
+    this.midFilter!.Q.value = 1;
     this.presenceFilter!.gain.value = 0;
+    this.presenceFilter!.frequency.value = 3500;
+    this.presenceFilter!.Q.value = 1;
     this.trebleFilter!.gain.value = 0;
+    this.trebleFilter!.frequency.value = 8000;
     this.gainNode!.gain.value = 1;
     this.compressor!.threshold.value = -24;
     this.compressor!.knee.value = 30;
@@ -163,16 +186,13 @@ export class AudioEnhancer {
     this.boostGainNode!.gain.value = 1;
   }
 
-  applyMode(mode: AudioMode): void {
+  private applyMode(mode: AudioMode): void {
     this.currentMode = mode;
     if (!this.isInitialized) return;
-
     this.resetFilters();
 
     switch (mode) {
       case "ultra_hd":
-        // Studio-grade HD: harmonic excitation, wide stereo image, transparent compression
-        // Sub-bass tightened, bass clean, mids detailed, presence + air boosted
         this.subBassFilter!.gain.value = -2;
         this.subBassFilter!.frequency.value = 40;
         this.bassFilter!.gain.value = 2;
@@ -185,7 +205,6 @@ export class AudioEnhancer {
         this.presenceFilter!.Q.value = 0.8;
         this.trebleFilter!.gain.value = 4;
         this.trebleFilter!.frequency.value = 10000;
-        // Transparent mastering-style compression
         this.compressor!.threshold.value = -16;
         this.compressor!.ratio.value = 2.5;
         this.compressor!.knee.value = 15;
@@ -195,7 +214,6 @@ export class AudioEnhancer {
         break;
 
       case "crystal_clear":
-        // Enhanced clarity: presence & treble boost, clean mids, gentle compression
         this.presenceFilter!.gain.value = 6;
         this.presenceFilter!.frequency.value = 3500;
         this.trebleFilter!.gain.value = 5;
@@ -213,7 +231,6 @@ export class AudioEnhancer {
         break;
 
       case "3d_surround":
-        // 3D spatial effect: subtle stereo widening, enhanced depth
         this.bassFilter!.gain.value = 2;
         this.presenceFilter!.gain.value = 3;
         this.trebleFilter!.gain.value = 2;
@@ -221,12 +238,10 @@ export class AudioEnhancer {
         this.compressor!.threshold.value = -18;
         this.compressor!.ratio.value = 2.5;
         this.gainNode!.gain.value = 1.1;
-        // Use subtle panning automation via the panner node
         this.startSurroundEffect();
         break;
 
       case "volume_boost":
-        // 500x maximum loudness with multi-stage amplification
         this.subBassFilter!.gain.value = 10;
         this.bassFilter!.gain.value = 10;
         this.midFilter!.gain.value = 10;
@@ -243,7 +258,6 @@ export class AudioEnhancer {
         break;
 
       case "dj_mode":
-        // Party sound: heavy bass, enhanced highs, punchy compression
         this.subBassFilter!.gain.value = 8;
         this.bassFilter!.gain.value = 6;
         this.midFilter!.gain.value = -2;
@@ -258,7 +272,6 @@ export class AudioEnhancer {
         break;
 
       case "bass_boost":
-        // Deep bass enhancement
         this.subBassFilter!.gain.value = 10;
         this.bassFilter!.gain.value = 8;
         this.midFilter!.gain.value = -1;
@@ -270,7 +283,6 @@ export class AudioEnhancer {
         break;
 
       case "vocal_boost":
-        // Enhanced vocals with clarity
         this.subBassFilter!.gain.value = -2;
         this.bassFilter!.gain.value = -1;
         this.midFilter!.gain.value = 5;
@@ -285,7 +297,6 @@ export class AudioEnhancer {
         break;
 
       case "night_mode":
-        // Soft, balanced sound for low volumes
         this.subBassFilter!.gain.value = 3;
         this.bassFilter!.gain.value = 4;
         this.midFilter!.gain.value = 1;
@@ -305,12 +316,9 @@ export class AudioEnhancer {
     }
   }
 
-  private surroundAnimationId: number | null = null;
-
   private startSurroundEffect(): void {
     this.stopSurroundEffect();
     if (!this.audioContext || !this.pannerNode) return;
-
     let phase = 0;
     const animate = () => {
       phase += 0.02;
@@ -336,52 +344,17 @@ export class AudioEnhancer {
     return this.currentMode;
   }
 
-  setMode(mode: AudioMode): void {
-    if (mode !== "3d_surround") {
-      this.stopSurroundEffect();
-    }
-    // Ensure AudioContext is running before routing audio
-    if (this.audioContext?.state === "suspended") {
-      this.audioContext.resume().catch(() => {});
-    }
-    if (mode === "normal") {
-      this.bypass();
-    } else {
-      this.unbypass();
-      this.applyMode(mode);
-    }
-  }
-
-  private bypass(): void {
-    if (!this.isInitialized || !this.sourceNode || !this.audioContext) return;
-    this.currentMode = "normal";
-    this.sourceNode.disconnect();
-    this.sourceNode.connect(this.audioContext.destination);
-  }
-
-  private unbypass(): void {
-    if (!this.isInitialized || !this.sourceNode || !this.subBassFilter || !this.pannerNode || !this.audioContext) return;
-    this.sourceNode.disconnect();
-    this.sourceNode
-      .connect(this.subBassFilter)
-      .connect(this.bassFilter!)
-      .connect(this.midFilter!)
-      .connect(this.presenceFilter!)
-      .connect(this.trebleFilter!)
-      .connect(this.gainNode!)
-      .connect(this.compressor!)
-      .connect(this.boostGainNode!)
-      .connect(this.pannerNode)
-      .connect(this.audioContext.destination);
+  get initialized(): boolean {
+    return this.isInitialized;
   }
 
   resumeContext(): void {
     if (this.audioContext?.state === "suspended") {
-      this.audioContext.resume();
+      this.audioContext.resume().catch(() => {});
     }
   }
 
-  destroy(): void {
+  private cleanup(): void {
     this.stopSurroundEffect();
     try { this.sourceNode?.disconnect(); } catch { /* already disconnected */ }
     this.sourceNode = null;
@@ -397,12 +370,12 @@ export class AudioEnhancer {
     this.subBassFilter = null;
     this.compressor = null;
     this.pannerNode = null;
-    this.convolver = null;
-    this.delayLeft = null;
-    this.delayRight = null;
-    this.surroundGain = null;
     this.boostGainNode = null;
     this.isInitialized = false;
     this.audioElement = null;
+  }
+
+  destroy(): void {
+    this.cleanup();
   }
 }

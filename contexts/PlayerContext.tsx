@@ -81,23 +81,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // Counter to force re-attaching listeners when audio element is recreated
   const [audioGeneration, setAudioGeneration] = useState(0);
 
-  // Helper to create a fresh audio element (used when recovering from Web Audio capture)
-  const createFreshAudio = useCallback((vol: number, speed: number) => {
-    const oldAudio = audioRef.current;
-    if (oldAudio) {
-      oldAudio.pause();
-      oldAudio.removeAttribute("src");
-      oldAudio.load();
-    }
-    const audio = new Audio();
-    audio.volume = vol;
-    audio.preload = "auto";
-    audio.playbackRate = speed;
-    audioRef.current = audio;
-    setAudioGeneration((g) => g + 1);
-    return audio;
-  }, []);
-
   useEffect(() => {
     if (!audioRef.current) {
       const audio = new Audio();
@@ -198,50 +181,49 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const loadAndPlay = useCallback(
     async (song: Song) => {
+      const audio = audioRef.current;
+      if (!audio) return;
       const url = getStreamUrl(song);
       if (!url) return;
 
-      // Always start with a fresh element to avoid Web Audio capture issues
-      if (enhancerRef.current) {
-        enhancerRef.current.destroy();
-        enhancerRef.current = null;
-      }
-
-      const vol = audioRef.current?.volume ?? 0.8;
-      const fresh = createFreshAudio(vol, playbackSpeed);
-
+      // Reuse the SAME audio element — just change src.
+      // If enhancer is connected, audio stays routed through it.
+      audio.pause();
+      audio.currentTime = 0;
       setCurrentSong(song);
       setProgress(0);
       setDuration(song.duration || 0);
-      fresh.src = url;
-      fresh.load();
+      audio.src = url;
+      audio.load();
+      audio.playbackRate = playbackSpeed;
 
-      // Start playback BEFORE await to stay within user gesture context
-      const playPromise = fresh.play().catch(() => null);
-
-      // For enhanced modes, init enhancer AFTER play starts
-      if (audioMode !== "normal") {
-        enhancerRef.current = new AudioEnhancer();
-        try {
-          await enhancerRef.current.init(fresh);
-          enhancerRef.current.setMode(audioMode);
-        } catch {
-          enhancerRef.current = null;
+      // If enhanced mode is active and enhancer isn't initialized yet,
+      // init it now (synchronous — preserves user gesture context)
+      if (audioMode !== "normal" && !enhancerRef.current?.initialized) {
+        if (!enhancerRef.current) {
+          enhancerRef.current = new AudioEnhancer();
         }
+        enhancerRef.current.init(audio);
+        enhancerRef.current.setMode(audioMode);
       }
 
-      // Check if initial play succeeded
-      const playResult = await playPromise;
-      if (playResult === null && fresh.paused) {
-        // Play failed — retry with lower quality
+      // Resume AudioContext if it was suspended
+      if (enhancerRef.current) {
+        enhancerRef.current.resumeContext();
+      }
+
+      try {
+        await audio.play();
+      } catch {
+        // Retry with lower quality on play failure
         const fallbackUrl = getBestDownloadUrl(song.downloadUrl);
         if (fallbackUrl && fallbackUrl !== url) {
-          fresh.src = fallbackUrl;
-          fresh.load();
-          try { await fresh.play(); } catch { /* final fallback failed */ }
+          audio.src = fallbackUrl;
+          audio.load();
+          try { await audio.play(); } catch { /* final fallback failed */ }
         }
       }
-      setIsPlaying(!fresh.paused);
+      setIsPlaying(!audio.paused);
       addToHistory(song);
 
       if ("mediaSession" in navigator) {
@@ -255,7 +237,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [getStreamUrl, playbackSpeed, audioMode, createFreshAudio]
+    [getStreamUrl, playbackSpeed, audioMode]
   );
 
   const fetchSuggestions = useCallback(async (songId: string) => {
@@ -487,65 +469,31 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setAutoPlay((prev) => !prev);
   }, []);
 
-  const setAudioMode = useCallback(async (mode: AudioMode) => {
+  const setAudioMode = useCallback((mode: AudioMode) => {
     setAudioModeState(mode);
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Save playback state before any changes
-    const savedTime = audio.currentTime;
-    const src = audio.src;
-    const wasPlaying = !audio.paused;
-    const vol = audio.volume;
-    const speed = audio.playbackRate;
-
-    // Always destroy existing enhancer first
-    if (enhancerRef.current) {
-      enhancerRef.current.destroy();
-      enhancerRef.current = null;
-    }
-
-    // Always create a fresh audio element to escape Web Audio capture.
-    const fresh = createFreshAudio(vol, speed);
-
-    if (!src) return;
-
-    fresh.src = src;
-    fresh.load();
-
-    // CRITICAL: Start playback BEFORE any await to stay within user gesture
-    // context. Mobile browsers block play() outside user gesture handlers.
-    // The audio will initially play through the element's default output,
-    // then seamlessly switch to Web Audio once the enhancer captures it.
-    if (wasPlaying) {
-      fresh.play().catch(() => {});
-    }
-
     if (mode !== "normal") {
-      // Initialize enhancer with the FRESH element.
-      // createMediaElementSource will capture audio output into AudioContext.
-      enhancerRef.current = new AudioEnhancer();
-      try {
-        await enhancerRef.current.init(fresh);
-        enhancerRef.current.setMode(mode);
-      } catch {
-        enhancerRef.current = null;
-        setAudioModeState("normal");
+      // Initialize enhancer if not already done (synchronous — stays in user gesture)
+      if (!enhancerRef.current) {
+        enhancerRef.current = new AudioEnhancer();
       }
-    }
-
-    // Restore seek position after media is seekable
-    if (savedTime > 0) {
-      const doSeek = () => {
-        try { fresh.currentTime = savedTime; } catch { /* ignore */ }
-      };
-      if (fresh.readyState >= 1) {
-        doSeek();
-      } else {
-        fresh.addEventListener("loadedmetadata", doSeek, { once: true });
+      if (!enhancerRef.current.initialized) {
+        const ok = enhancerRef.current.init(audio);
+        if (!ok) {
+          enhancerRef.current = null;
+          setAudioModeState("normal");
+          return;
+        }
       }
+      enhancerRef.current.setMode(mode);
+    } else if (enhancerRef.current?.initialized) {
+      // Switch to normal — bypass the filter chain (audio still goes through
+      // AudioContext but with no processing, so it sounds identical to direct)
+      enhancerRef.current.setMode("normal");
     }
-  }, [createFreshAudio]);
+  }, []);
 
   useEffect(() => {
     if ("mediaSession" in navigator) {
