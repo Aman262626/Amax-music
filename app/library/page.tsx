@@ -18,6 +18,8 @@ import {
   IoPlay,
   IoShuffle,
   IoTrash,
+  IoMusicalNotes,
+  IoSparkles,
 } from "react-icons/io5";
 
 type LibraryTab = "favorites" | "history" | "settings";
@@ -147,14 +149,19 @@ export default function LibraryPage() {
           )}
 
           {favorites.length === 0 ? (
-            <div className="text-center py-16">
-              <IoHeart className="text-spotify-light-gray text-5xl mx-auto mb-4" />
+            <div className="text-center py-16 page-enter">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent-pink/20 to-accent-red/20 flex items-center justify-center">
+                <IoHeart className="text-accent-pink text-4xl" />
+              </div>
               <p className="text-white text-lg font-semibold mb-2">
                 Songs you like will appear here
               </p>
-              <p className="text-spotify-light-gray text-sm">
+              <p className="text-spotify-light-gray text-sm mb-4">
                 Save songs by tapping the heart icon.
               </p>
+              <a href="/search" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent-pink to-accent-red rounded-full text-white text-sm font-medium hover:scale-105 transition-transform">
+                <IoSparkles /> Discover Music
+              </a>
             </div>
           ) : (
             <div>
@@ -182,14 +189,19 @@ export default function LibraryPage() {
           </div>
 
           {history.length === 0 ? (
-            <div className="text-center py-16">
-              <IoTime className="text-spotify-light-gray text-5xl mx-auto mb-4" />
+            <div className="text-center py-16 page-enter">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent-purple/20 to-accent-blue/20 flex items-center justify-center">
+                <IoMusicalNotes className="text-accent-purple text-4xl" />
+              </div>
               <p className="text-white text-lg font-semibold mb-2">
                 No listening history yet
               </p>
-              <p className="text-spotify-light-gray text-sm">
+              <p className="text-spotify-light-gray text-sm mb-4">
                 Songs you play will appear here.
               </p>
+              <a href="/" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent-purple to-accent-blue rounded-full text-white text-sm font-medium hover:scale-105 transition-transform">
+                <IoPlay /> Start Listening
+              </a>
             </div>
           ) : (
             <div>
@@ -262,9 +274,20 @@ export default function LibraryPage() {
           </div>
 
           <div className="glass rounded-xl p-4">
+            <h3 className="text-white font-semibold mb-3">Keyboard Shortcuts</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-spotify-light-gray">Play/Pause</span><kbd className="px-2 py-0.5 glass rounded text-white text-xs font-mono">Space</kbd></div>
+              <div className="flex justify-between"><span className="text-spotify-light-gray">Next</span><kbd className="px-2 py-0.5 glass rounded text-white text-xs font-mono">N</kbd></div>
+              <div className="flex justify-between"><span className="text-spotify-light-gray">Previous</span><kbd className="px-2 py-0.5 glass rounded text-white text-xs font-mono">P</kbd></div>
+              <div className="flex justify-between"><span className="text-spotify-light-gray">Mute</span><kbd className="px-2 py-0.5 glass rounded text-white text-xs font-mono">M</kbd></div>
+              <div className="flex justify-between"><span className="text-spotify-light-gray">All Shortcuts</span><kbd className="px-2 py-0.5 glass rounded text-white text-xs font-mono">?</kbd></div>
+            </div>
+          </div>
+
+          <div className="glass rounded-xl p-4">
             <h3 className="text-white font-semibold mb-2">About</h3>
             <p className="text-spotify-light-gray text-sm mb-1">
-              AMAX Music Player v2.0.0
+              AMAX Music Player v3.0.0
             </p>
             <p className="text-spotify-light-gray text-xs">
               All copyrights reserved to cantarellabots and its affiliated parties.

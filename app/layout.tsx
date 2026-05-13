@@ -9,6 +9,11 @@ import MobileNav from "@/components/MobileNav";
 import PartyJoinHandler from "@/components/PartyJoinHandler";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AppShell from "@/components/AppShell";
+import KeyboardShortcuts from "@/components/KeyboardShortcuts";
+import { ToastProvider } from "@/components/Toast";
+import ScrollToTop from "@/components/ScrollToTop";
+import QuickPlayFAB from "@/components/QuickPlayFAB";
+import OfflineBanner from "@/components/OfflineBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -57,8 +62,10 @@ export default function RootLayout({
       <body className={`${inter.className} bg-spotify-black`}>
         <ErrorBoundary>
           <AppShell>
+          <ToastProvider>
           <PlayerProvider>
             <div className="h-screen flex flex-col overflow-hidden">
+              <OfflineBanner />
               <Suspense fallback={null}>
                 <PartyJoinHandler />
               </Suspense>
@@ -70,8 +77,12 @@ export default function RootLayout({
               </div>
               <Player />
               <MobileNav />
+              <KeyboardShortcuts />
+              <ScrollToTop />
+              <QuickPlayFAB />
             </div>
           </PlayerProvider>
+          </ToastProvider>
           </AppShell>
         </ErrorBoundary>
       </body>

@@ -7,6 +7,8 @@ import PlaylistCard from "@/components/PlaylistCard";
 import SongRow from "@/components/SongRow";
 import SongPreviewScroll from "@/components/SongPreviewScroll";
 import VideoPreviewScroll from "@/components/VideoPreviewScroll";
+import StatsBar from "@/components/StatsBar";
+import { SongCardSkeleton } from "@/components/Skeleton";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { getHistory, getFavorites } from "@/lib/storage";
 import type { Song, Album, Playlist } from "@/lib/types";
@@ -190,13 +192,7 @@ export default function HomePage() {
     }
   }, [activeCategory, categorySongs, fetchCategory]);
 
-  const SkeletonCard = () => (
-    <div className="glass-card rounded-xl p-3 sm:p-4">
-      <div className="aspect-square skeleton rounded-lg mb-3" />
-      <div className="skeleton h-4 w-3/4 mb-2" />
-      <div className="skeleton h-3 w-1/2" />
-    </div>
-  );
+  const SkeletonCard = SongCardSkeleton;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -207,6 +203,9 @@ export default function HomePage() {
         </h1>
         <p className="text-spotify-light-gray text-sm">Discover music that moves you</p>
       </div>
+
+      {/* Stats Bar */}
+      <StatsBar />
 
       {/* Mood Radio */}
       <section className="mb-8">
