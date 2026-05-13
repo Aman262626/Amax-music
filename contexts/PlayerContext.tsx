@@ -166,6 +166,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
+  // Keep AudioContext alive on mobile — resume on any user interaction.
+  // Mobile browsers suspend AudioContext aggressively; this ensures
+  // enhanced audio modes keep producing sound.
+  useEffect(() => {
+    const resumeCtx = () => {
+      if (enhancerRef.current) {
+        enhancerRef.current.resumeContext();
+      }
+    };
+    document.addEventListener("touchstart", resumeCtx, { passive: true });
+    document.addEventListener("touchend", resumeCtx, { passive: true });
+    document.addEventListener("click", resumeCtx);
+    return () => {
+      document.removeEventListener("touchstart", resumeCtx);
+      document.removeEventListener("touchend", resumeCtx);
+      document.removeEventListener("click", resumeCtx);
+    };
+  }, []);
+
   const getStreamUrl = useCallback((song: Song): string => {
     if (!song.downloadUrl || song.downloadUrl.length === 0) return "";
     // Always try highest quality first (320kbps), then fall back to user preference
@@ -182,9 +201,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const url = getStreamUrl(song);
       if (!url) return;
 
-      // If an enhanced mode was previously active, the current audio element
-      // is captured by Web Audio. We must always start with a fresh element
-      // to guarantee clean playback.
+      // Always start with a fresh element to avoid Web Audio capture issues
       if (enhancerRef.current) {
         enhancerRef.current.destroy();
         enhancerRef.current = null;
@@ -199,7 +216,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       fresh.src = url;
       fresh.load();
 
-      // For enhanced modes, init enhancer with the fresh (uncaptured) element
+      // Start playback BEFORE await to stay within user gesture context
+      const playPromise = fresh.play().catch(() => null);
+
+      // For enhanced modes, init enhancer AFTER play starts
       if (audioMode !== "normal") {
         enhancerRef.current = new AudioEnhancer();
         try {
@@ -210,10 +230,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      try {
-        await fresh.play();
-      } catch {
-        // Retry with lower quality on play failure
+      // Check if initial play succeeded
+      const playResult = await playPromise;
+      if (playResult === null && fresh.paused) {
+        // Play failed — retry with lower quality
         const fallbackUrl = getBestDownloadUrl(song.downloadUrl);
         if (fallbackUrl && fallbackUrl !== url) {
           fresh.src = fallbackUrl;
@@ -486,8 +506,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Always create a fresh audio element to escape Web Audio capture.
-    // createMediaElementSource permanently binds the element — the ONLY
-    // way to get normal playback back is a brand-new Audio element.
     const fresh = createFreshAudio(vol, speed);
 
     if (!src) return;
@@ -495,8 +513,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     fresh.src = src;
     fresh.load();
 
+    // CRITICAL: Start playback BEFORE any await to stay within user gesture
+    // context. Mobile browsers block play() outside user gesture handlers.
+    // The audio will initially play through the element's default output,
+    // then seamlessly switch to Web Audio once the enhancer captures it.
+    if (wasPlaying) {
+      fresh.play().catch(() => {});
+    }
+
     if (mode !== "normal") {
-      // Initialize enhancer with the FRESH (uncaptured) element
+      // Initialize enhancer with the FRESH element.
+      // createMediaElementSource will capture audio output into AudioContext.
       enhancerRef.current = new AudioEnhancer();
       try {
         await enhancerRef.current.init(fresh);
@@ -504,16 +531,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       } catch {
         enhancerRef.current = null;
         setAudioModeState("normal");
-      }
-    }
-
-    // Try to play — must happen as close to user gesture as possible
-    if (wasPlaying) {
-      try {
-        await fresh.play();
-      } catch {
-        // Retry once after a brief delay (mobile sometimes needs this)
-        setTimeout(() => { fresh.play().catch(() => {}); }, 100);
       }
     }
 

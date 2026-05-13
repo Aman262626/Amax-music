@@ -52,7 +52,7 @@ export class AudioEnhancer {
     if (this.isInitialized && this.audioElement === audio) {
       // Already initialized with same element — just resume context if needed
       if (this.audioContext?.state === "suspended") {
-        await this.audioContext.resume();
+        this.audioContext.resume().catch(() => {});
       }
       return;
     }
@@ -66,10 +66,17 @@ export class AudioEnhancer {
       this.audioContext = new AudioContext();
       this.audioElement = audio;
 
-      // Resume AudioContext FIRST — on mobile, it starts suspended
-      // and createMediaElementSource won't produce sound until it's running
+      // Auto-resume AudioContext whenever it suspends (mobile browsers
+      // aggressively suspend AudioContext to save battery)
+      this.audioContext.onstatechange = () => {
+        if (this.audioContext?.state === "suspended") {
+          this.audioContext.resume().catch(() => {});
+        }
+      };
+
+      // Resume immediately — don't await to preserve user gesture context
       if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume();
+        this.audioContext.resume().catch(() => {});
       }
 
       this.sourceNode = this.audioContext.createMediaElementSource(audio);
