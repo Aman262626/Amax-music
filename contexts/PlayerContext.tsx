@@ -78,8 +78,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [autoPlay, setAutoPlay] = useState(true);
   const [audioMode, setAudioModeState] = useState<AudioMode>("normal");
   const enhancerRef = useRef<AudioEnhancer | null>(null);
-  // Counter to force re-attaching listeners when audio element is recreated
-  const [audioGeneration, setAudioGeneration] = useState(0);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -97,9 +95,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const onEnded = () => handleEndedRef.current();
     const onPlay = () => {
       setIsPlaying(true);
-      if (enhancerRef.current) {
-        enhancerRef.current.resumeContext();
-      }
       if ("mediaSession" in navigator) {
         navigator.mediaSession.playbackState = "playing";
       }
@@ -136,9 +131,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("canplay", onCanPlay);
       audio.removeEventListener("error", onError);
     };
-    // Re-run when audio element is recreated
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioGeneration]);
+  }, []);
 
   // Track real listening time (save every 10 seconds while playing)
   useEffect(() => {
@@ -149,24 +143,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // Keep AudioContext alive on mobile — resume on any user interaction.
-  // Mobile browsers suspend AudioContext aggressively; this ensures
-  // enhanced audio modes keep producing sound.
-  useEffect(() => {
-    const resumeCtx = () => {
-      if (enhancerRef.current) {
-        enhancerRef.current.resumeContext();
-      }
-    };
-    document.addEventListener("touchstart", resumeCtx, { passive: true });
-    document.addEventListener("touchend", resumeCtx, { passive: true });
-    document.addEventListener("click", resumeCtx);
-    return () => {
-      document.removeEventListener("touchstart", resumeCtx);
-      document.removeEventListener("touchend", resumeCtx);
-      document.removeEventListener("click", resumeCtx);
-    };
-  }, []);
 
   const getStreamUrl = useCallback((song: Song): string => {
     if (!song.downloadUrl || song.downloadUrl.length === 0) return "";
@@ -186,8 +162,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const url = getStreamUrl(song);
       if (!url) return;
 
-      // Reuse the SAME audio element — just change src.
-      // If enhancer is connected, audio stays routed through it.
       audio.pause();
       audio.currentTime = 0;
       setCurrentSong(song);
@@ -197,25 +171,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.load();
       audio.playbackRate = playbackSpeed;
 
-      // If enhanced mode is active and enhancer isn't initialized yet,
-      // init it now (synchronous — preserves user gesture context)
-      if (audioMode !== "normal" && !enhancerRef.current?.initialized) {
-        if (!enhancerRef.current) {
-          enhancerRef.current = new AudioEnhancer();
-        }
-        enhancerRef.current.init(audio);
-        enhancerRef.current.setMode(audioMode);
-      }
-
-      // Resume AudioContext if it was suspended
-      if (enhancerRef.current) {
-        enhancerRef.current.resumeContext();
-      }
-
       try {
         await audio.play();
       } catch {
-        // Retry with lower quality on play failure
         const fallbackUrl = getBestDownloadUrl(song.downloadUrl);
         if (fallbackUrl && fallbackUrl !== url) {
           audio.src = fallbackUrl;
@@ -237,7 +195,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [getStreamUrl, playbackSpeed, audioMode]
+    [getStreamUrl, playbackSpeed]
   );
 
   const fetchSuggestions = useCallback(async (songId: string) => {
@@ -367,7 +325,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const setVolume = useCallback((vol: number) => {
     setVolumeState(vol);
-    if (audioRef.current) {
+    if (enhancerRef.current) {
+      enhancerRef.current.setUserVolume(vol);
+    } else if (audioRef.current) {
       audioRef.current.volume = vol;
     }
     setSavedVolume(vol);
@@ -474,25 +434,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (mode !== "normal") {
-      // Initialize enhancer if not already done (synchronous — stays in user gesture)
-      if (!enhancerRef.current) {
-        enhancerRef.current = new AudioEnhancer();
-      }
-      if (!enhancerRef.current.initialized) {
-        const ok = enhancerRef.current.init(audio);
-        if (!ok) {
-          enhancerRef.current = null;
-          setAudioModeState("normal");
-          return;
-        }
-      }
-      enhancerRef.current.setMode(mode);
-    } else if (enhancerRef.current?.initialized) {
-      // Switch to normal — bypass the filter chain (audio still goes through
-      // AudioContext but with no processing, so it sounds identical to direct)
-      enhancerRef.current.setMode("normal");
+    // Initialize enhancer if needed (no Web Audio API — just sets volume/effects)
+    if (!enhancerRef.current) {
+      enhancerRef.current = new AudioEnhancer();
+      enhancerRef.current.init(audio);
     }
+    enhancerRef.current.setMode(mode);
   }, []);
 
   useEffect(() => {
