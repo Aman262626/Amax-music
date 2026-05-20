@@ -187,10 +187,25 @@ export async function getTrending(): Promise<{
   albums: Album[];
   playlists: Playlist[];
 }> {
+  const songQueries = [
+    "trending hits 2025", "latest bollywood songs", "top hindi songs",
+    "new releases india", "viral songs", "chartbusters hindi",
+    "popular songs today", "superhit bollywood", "trending music india",
+  ];
+  const albumQueries = [
+    "top albums", "new albums bollywood", "latest albums hindi",
+    "popular albums", "best albums 2025",
+  ];
+  const playlistQueries = [
+    "bollywood hits", "top playlists", "hindi chartbusters",
+    "best of bollywood", "new hindi songs",
+  ];
+  const pickRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
   const [songs, albums, playlists] = await Promise.all([
-    searchSongs("trending", 1, 20),
-    searchAlbums("top", 1, 10),
-    searchPlaylists("bollywood", 1, 10),
+    searchSongs(pickRandom(songQueries), 1, 20),
+    searchAlbums(pickRandom(albumQueries), 1, 10),
+    searchPlaylists(pickRandom(playlistQueries), 1, 10),
   ]);
   return { songs, albums, playlists };
 }

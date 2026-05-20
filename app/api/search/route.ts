@@ -18,12 +18,16 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === "songs") {
-    const songs = await searchSongs(query, page, 30);
+    let songs = await searchSongs(query, page, 30);
+    // Retry once if empty results (API might have temporarily failed)
+    if (songs.length === 0) {
+      await new Promise((r) => setTimeout(r, 500));
+      songs = await searchSongs(query, page, 30);
+    }
     return NextResponse.json({ songs });
   }
 
   if (type === "lyrics") {
-    // Search by lyrics using LRCLIB, then find matching songs on JioSaavn
     const songs = await searchByLyrics(query);
     return NextResponse.json({ songs, searchedByLyrics: true });
   }

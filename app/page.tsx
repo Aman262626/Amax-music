@@ -15,12 +15,12 @@ import type { Song, Album, Playlist } from "@/lib/types";
 import { IoMusicalNotes, IoHappy, IoSad, IoFlame, IoMoon, IoCafe, IoFitness, IoPlay, IoShuffle } from "react-icons/io5";
 
 const MOODS = [
-  { label: "Happy", icon: IoHappy, query: "happy upbeat bollywood songs", color: "from-yellow-400 to-orange-500" },
-  { label: "Sad", icon: IoSad, query: "sad emotional hindi songs", color: "from-blue-400 to-indigo-600" },
-  { label: "Party", icon: IoFlame, query: "party dance hindi songs", color: "from-red-500 to-pink-500" },
-  { label: "Chill", icon: IoMoon, query: "chill lofi hindi songs", color: "from-purple-400 to-indigo-500" },
-  { label: "Workout", icon: IoFitness, query: "workout gym motivation songs", color: "from-fuchsia-500 to-purple-600" },
-  { label: "Focus", icon: IoCafe, query: "instrumental focus study music", color: "from-amber-400 to-orange-500" },
+  { label: "Happy", icon: IoHappy, query: "happy bollywood songs", fallbackQueries: ["khushi ke geet", "feel good hindi songs", "upbeat bollywood"], color: "from-yellow-400 to-orange-500" },
+  { label: "Sad", icon: IoSad, query: "sad hindi songs", fallbackQueries: ["dard bhare gane", "emotional bollywood", "heartbreak hindi"], color: "from-blue-400 to-indigo-600" },
+  { label: "Party", icon: IoFlame, query: "party dance hindi songs", fallbackQueries: ["dance bollywood hits", "club songs hindi", "party anthem"], color: "from-red-500 to-pink-500" },
+  { label: "Chill", icon: IoMoon, query: "chill lofi hindi", fallbackQueries: ["lofi bollywood", "relaxing hindi songs", "soft hindi music"], color: "from-purple-400 to-indigo-500" },
+  { label: "Workout", icon: IoFitness, query: "workout motivation songs", fallbackQueries: ["gym songs hindi", "pump up music", "energy songs bollywood"], color: "from-fuchsia-500 to-purple-600" },
+  { label: "Focus", icon: IoCafe, query: "instrumental study music", fallbackQueries: ["focus music", "concentration music", "calm instrumental"], color: "from-amber-400 to-orange-500" },
 ];
 
 const CATEGORIES = [
@@ -66,16 +66,22 @@ export default function HomePage() {
 
   const playMood = useCallback(async (label: string, query: string) => {
     setActiveMood(label);
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=songs`);
-      const data = await res.json();
-      const moodSongs = (data.songs as Song[]) || [];
-      if (moodSongs.length > 0) {
-        const shuffled = moodSongs.sort(() => Math.random() - 0.5);
-        playQueue(shuffled, 0);
+    const mood = MOODS.find((m) => m.label === label);
+    const queries = [query, ...(mood?.fallbackQueries || [])];
+
+    for (const q of queries) {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=songs`);
+        const data = await res.json();
+        const moodSongs = (data.songs as Song[]) || [];
+        if (moodSongs.length > 0) {
+          const shuffled = moodSongs.sort(() => Math.random() - 0.5);
+          playQueue(shuffled, 0);
+          return;
+        }
+      } catch {
+        continue;
       }
-    } catch {
-      // ignore
     }
   }, [playQueue]);
 

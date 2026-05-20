@@ -260,7 +260,7 @@ export default function PartyMode() {
         );
         if (!res.ok) {
           failCountRef.current++;
-          if (failCountRef.current >= 10) {
+          if (failCountRef.current >= 30) {
             setError("Party room expired. Create a new one.");
             setRoomId(null);
             setRoom(null);
@@ -311,7 +311,7 @@ export default function PartyMode() {
         }
       } catch {
         failCountRef.current++;
-        if (failCountRef.current >= 10) {
+        if (failCountRef.current >= 30) {
           setError("Connection lost. Create a new party.");
           setRoomId(null);
           setRoom(null);

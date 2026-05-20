@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 interface PartyRoom {
   id: string;
@@ -18,7 +18,12 @@ interface PartyRoom {
   songChangedAt: number;
 }
 
-const rooms = new Map<string, PartyRoom>();
+// Use globalThis to persist rooms across hot reloads and within warm serverless containers
+const globalRooms = (globalThis as unknown as { __partyRooms?: Map<string, PartyRoom> });
+if (!globalRooms.__partyRooms) {
+  globalRooms.__partyRooms = new Map<string, PartyRoom>();
+}
+const rooms = globalRooms.__partyRooms;
 
 function cleanOldRooms() {
   const now = Date.now();
