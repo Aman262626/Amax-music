@@ -20,7 +20,7 @@ export default function SongCard({ song, songs }: SongCardProps) {
   return (
     <button
       onClick={() => playSong(song, songs)}
-      className="group glass-card holo-card rounded-xl p-3 sm:p-4 text-left w-full"
+      className="group glass-card holo-card holo-frame rounded-xl p-3 sm:p-4 text-left w-full"
     >
       <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-3 shadow-lg album-art-3d">
         <SafeImage

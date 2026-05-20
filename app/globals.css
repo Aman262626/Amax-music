@@ -1037,3 +1037,244 @@ input[type="range"]::-webkit-slider-thumb {
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+/* ===== Holographic Theme (White / Red / Blue) ===== */
+[data-design="holographic"] {
+  --amax-green: #3b82f6;
+  --amax-green-light: #60a5fa;
+  --accent-pink: #ef4444;
+  --accent-purple: #6366f1;
+  --accent-red: #dc2626;
+  --accent-orange: #f97316;
+  --accent-cyan: #3b82f6;
+  --accent-blue: #2563eb;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-hover: rgba(255, 255, 255, 0.08);
+}
+
+[data-design="holographic"] .glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-design="holographic"] .glass-strong {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 0 2px rgba(255, 255, 255, 0.15) inset,
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(59, 130, 246, 0.08);
+}
+
+[data-design="holographic"] .glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+[data-design="holographic"] .glass-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px) rotateX(2deg) rotateY(-1deg);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(59, 130, 246, 0.2),
+    0 0 40px rgba(239, 68, 68, 0.1),
+    0 0 60px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Holographic icon glow effects */
+[data-design="holographic"] .holo-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  perspective: 500px;
+}
+
+[data-design="holographic"] .holo-icon::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(239, 68, 68, 0.5),
+    rgba(59, 130, 246, 0.5),
+    rgba(255, 255, 255, 0.4)
+  );
+  animation: holo-icon-spin 3s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  filter: blur(3px);
+}
+
+[data-design="holographic"] .holo-icon:hover::before {
+  opacity: 1;
+}
+
+@keyframes holo-icon-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 3D holographic frame around cards */
+[data-design="holographic"] .holo-frame {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+[data-design="holographic"] .holo-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.5),
+    rgba(239, 68, 68, 0.4),
+    rgba(59, 130, 246, 0.5),
+    rgba(255, 255, 255, 0.3)
+  );
+  background-size: 300% 300%;
+  animation: holo-frame-shift 4s ease infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes holo-frame-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Holographic shimmer on nav icons */
+[data-design="holographic"] .nav-icon {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+}
+
+[data-design="holographic"] .nav-icon:hover {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6))
+          drop-shadow(0 0 16px rgba(239, 68, 68, 0.3));
+  transform: scale(1.15) translateZ(10px);
+}
+
+/* Premium glassmorphism shadow frame */
+[data-design="holographic"] .premium-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 20px rgba(59, 130, 246, 0.1),
+    0 0 40px rgba(239, 68, 68, 0.05);
+}
+
+/* 3D button effects */
+[data-design="holographic"] button {
+  transform-style: preserve-3d;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+[data-design="holographic"] button:active {
+  transform: scale(0.96) translateZ(-2px);
+}
+
+/* Holographic gradient text override */
+[data-design="holographic"] .gradient-text {
+  background: linear-gradient(135deg, #ffffff, #3b82f6, #ef4444, #ffffff);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* Holographic glow effects */
+[data-design="holographic"] .glow-green {
+  box-shadow:
+    0 0 15px rgba(59, 130, 246, 0.4),
+    0 0 30px rgba(59, 130, 246, 0.2),
+    0 0 60px rgba(239, 68, 68, 0.1),
+    0 0 80px rgba(255, 255, 255, 0.05);
+}
+
+/* Holographic progress bar */
+[data-design="holographic"] .progress-gradient {
+  background: linear-gradient(90deg, #3b82f6, #ffffff, #ef4444, #3b82f6);
+  background-size: 300% 100%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Holographic neon text */
+[data-design="holographic"] .neon-green {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 40px rgba(239, 68, 68, 0.2);
+}
+
+/* 3D depth for sidebar */
+[data-design="holographic"] .sidebar-active::before {
+  background: linear-gradient(180deg, #3b82f6, #ef4444);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+}
+
+/* Holographic mesh background */
+[data-design="holographic"] .gradient-mesh {
+  background:
+    radial-gradient(at 20% 20%, rgba(239, 68, 68, 0.12) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(at 40% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(239, 68, 68, 0.04) 0%, transparent 70%);
+}
+
+/* Holographic holo-card override */
+[data-design="holographic"] .holo-card::before {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(59, 130, 246, 0.1) 38%,
+    rgba(255, 255, 255, 0.15) 42%,
+    rgba(239, 68, 68, 0.1) 46%,
+    transparent 54%
+  );
+  background-size: 200% 100%;
+  animation: holo-shimmer 3.5s linear infinite;
+}
+
+[data-design="holographic"] .holo-card:hover::before {
+  background: linear-gradient(
+    105deg,
+    transparent 25%,
+    rgba(59, 130, 246, 0.2) 35%,
+    rgba(255, 255, 255, 0.25) 42%,
+    rgba(239, 68, 68, 0.2) 48%,
+    rgba(59, 130, 246, 0.15) 52%,
+    transparent 62%
+  );
+  background-size: 200% 100%;
+  animation: holo-shimmer 2s linear infinite;
+}

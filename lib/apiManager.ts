@@ -55,9 +55,9 @@ const API_ENDPOINTS: ApiEndpoint[] = [
   { url: "https://jio-saavn-api-psi.vercel.app/api", name: "psi", priority: 4 },
 ];
 
-const FAILURE_THRESHOLD = 3;
-const RECOVERY_TIMEOUT_MS = 60_000; // 1 minute before retrying failed endpoint
-const REQUEST_TIMEOUT_MS = 8_000;
+const FAILURE_THRESHOLD = 5;
+const RECOVERY_TIMEOUT_MS = 30_000; // 30 seconds before retrying failed endpoint
+const REQUEST_TIMEOUT_MS = 10_000;
 
 class ApiManager {
   private healthMap: Map<string, EndpointHealth> = new Map();
@@ -138,8 +138,8 @@ class ApiManager {
       return this.fetch(path, init);
     }
 
-    // Try up to 5 endpoints for each request
-    const maxAttempts = Math.min(5, healthy.length);
+    // Try up to 7 endpoints for each request
+    const maxAttempts = Math.min(7, healthy.length);
     const startIdx = this.roundRobinOffset % healthy.length;
 
     for (let i = 0; i < maxAttempts; i++) {

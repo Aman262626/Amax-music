@@ -82,7 +82,7 @@ export default function Sidebar() {
                     : "text-spotify-light-gray hover:text-white hover:bg-white/5"
                 }`}
               >
-                <item.icon className={`text-xl transition-transform group-hover:scale-110 ${active ? "text-spotify-green" : ""}`} />
+                <item.icon className={`text-xl transition-transform group-hover:scale-110 nav-icon holo-icon ${active ? "text-spotify-green" : ""}`} />
                 {item.label}
                 {active && (
                   <div className="ml-auto w-1.5 h-1.5 bg-spotify-green rounded-full glow-green" />

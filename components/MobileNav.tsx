@@ -35,7 +35,7 @@ export default function MobileNav() {
               }`}
             >
               <div className="relative">
-                <item.icon className={`text-xl transition-transform ${active ? "text-spotify-green scale-110" : ""}`} />
+                <item.icon className={`text-xl transition-transform nav-icon holo-icon ${active ? "text-spotify-green scale-110" : ""}`} />
                 {active && (
                   <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-spotify-green rounded-full" />
                 )}
